@@ -29,7 +29,7 @@ export default function App() {
   // Theme State (Default: dark)
   const [theme, setTheme] = useState<'light' | 'dark'>(() => {
     const saved = localStorage.getItem('blog_theme');
-    return (saved === 'light' || saved === 'dark') ? saved : 'dark';
+    return (saved === 'light' || saved === 'dark') ? saved : 'light';
   });
 
   // Blog states backed by localStorage
