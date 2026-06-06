@@ -780,7 +780,7 @@ export default function App() {
 
               {/* Cards list arranged inline as in the screenshot */}
               <div className="bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 p-3 sm:p-6 rounded-2xl shadow-sm divide-y divide-slate-150 dark:divide-slate-800/80">
-                {posts.slice(0, 4).map(post => (
+                {posts.slice(0, 10).map(post => (
                   <article 
                     key={post.id} 
                     id={`post-card-${post.id}`}

@@ -143,7 +143,7 @@ export default function Sidebar({
           </span>
           <div className="flex items-center justify-center gap-2.5">
             <a 
-              href="https://github.com/xiaohefx" 
+              href="https://github.com/xiaoheaifx" 
               referrerPolicy="no-referrer"
               target="_blank" 
               rel="noreferrer" 
