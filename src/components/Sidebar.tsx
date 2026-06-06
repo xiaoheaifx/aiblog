@@ -153,7 +153,7 @@ export default function Sidebar({
               <Github className="w-4 h-4" />
             </a>
             <a 
-              href="https://youtube.com" 
+              href="https://www.youtube.com/@xiaohefx" 
               referrerPolicy="no-referrer"
               target="_blank" 
               rel="noreferrer" 
@@ -163,7 +163,7 @@ export default function Sidebar({
               <Youtube className="w-4 h-4" />
             </a>
             <a 
-              href="https://x.com" 
+              href="https://x.com/xiaohefx" 
               referrerPolicy="no-referrer"
               target="_blank" 
               rel="noreferrer" 
@@ -173,7 +173,7 @@ export default function Sidebar({
               <svg viewBox="0 0 24 24" fill="currentColor" className="w-4 h-4"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
             </a>
             <a 
-              href="https://t.me" 
+              href="https://t.me/xiaohefx" 
               referrerPolicy="no-referrer"
               target="_blank" 
               rel="noreferrer" 

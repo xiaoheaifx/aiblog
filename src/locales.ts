@@ -20,7 +20,7 @@ export const translations = {
 
     // 个人资料
     profileTitle: '个人资料',
-    authorName: '小何',
+    authorName: 'XiaoHe',
     authorSub: '全栈 AI 开发与行业观察者',
     articlesCount: '文章数量',
     commentsCount: '评论数量',
