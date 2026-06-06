@@ -33,20 +33,49 @@ function successResponse(data, status = 200) {
 
 // GET /api/posts - 获取所有文章（不需要认证，公开）
 export async function onRequestGet({ env }) {
+  // 先检查 D1 绑定是否可用
+  if (!env.DB) {
+    return errorResponse('D1 binding DB is not defined. Please check Pages project bindings.', 500);
+  }
+
   try {
+    // 注意：排序使用 date 字段。如果表结构中没有 date，请修改为 created_at
     const { results } = await env.DB.prepare(
       `SELECT id, title, content, excerpt, coverImage, date, likes, views, category, tags, isPinned 
-       FROM posts ORDER BY isPinned DESC, created_at DESC`
+       FROM posts ORDER BY isPinned DESC, date DESC`
     ).all();
-    // 注意：tags 字段是 JSON 字符串，需要解析成数组
-    const posts = results.map(p => ({
-      ...p,
-      tags: p.tags ? JSON.parse(p.tags) : []
-    }));
+
+    // 安全解析 tags 字段（JSON 数组或逗号分隔字符串）
+    const posts = results.map(p => {
+      let parsedTags = [];
+      if (p.tags) {
+        try {
+          // 尝试解析为 JSON
+          parsedTags = JSON.parse(p.tags);
+          // 确保结果是数组
+          if (!Array.isArray(parsedTags)) {
+            parsedTags = [];
+          }
+        } catch (e) {
+          // 如果解析失败，尝试按逗号分隔（兼容旧数据）
+          if (typeof p.tags === 'string' && p.tags.includes(',')) {
+            parsedTags = p.tags.split(',').map(t => t.trim()).filter(t => t);
+          } else {
+            parsedTags = [];
+          }
+        }
+      }
+      return {
+        ...p,
+        tags: parsedTags
+      };
+    });
+
     return successResponse(posts);
   } catch (error) {
     console.error(error);
-    return errorResponse('Failed to fetch posts');
+    // 返回详细错误信息，便于前端/浏览器查看
+    return errorResponse(`Failed to fetch posts: ${error.message}`, 500);
   }
 }
 
@@ -95,7 +124,7 @@ export async function onRequestPost({ request, env }) {
     }
   } catch (error) {
     console.error(error);
-    return errorResponse('Internal server error');
+    return errorResponse(`Internal server error: ${error.message}`);
   }
 }
 
@@ -138,7 +167,7 @@ export async function onRequestPut({ request, env }) {
     }
   } catch (error) {
     console.error(error);
-    return errorResponse('Internal server error');
+    return errorResponse(`Internal server error: ${error.message}`);
   }
 }
 
@@ -159,6 +188,6 @@ export async function onRequestDelete({ request, env }) {
     }
   } catch (error) {
     console.error(error);
-    return errorResponse('Failed to delete post');
+    return errorResponse(`Failed to delete post: ${error.message}`);
   }
 }
