@@ -14,9 +14,9 @@ interface AdminPanelProps {
   comments: Comment[];
   stats: UserStats;
   locale: 'zh' | 'en';
-  onAddPost: (post: Post) => void;
-  onUpdatePost: (post: Post) => void;
-  onDeletePost: (id: string) => void;
+  onAddPost: (post: Post) => Promise<void>;
+  onUpdatePost: (post: Post) => Promise<void>;
+  onDeletePost: (id: string) => Promise<void>;
   onDeleteComment: (id: string) => void;
   onToggleHideComment: (id: string) => void;
   onUpdateStats: (stats: UserStats) => void;
@@ -54,7 +54,7 @@ export default function AdminPanel({
   const [editingPost, setEditingPost] = useState<Post | null>(null);
   const [isCreating, setIsCreating] = useState(false);
   
-  // Custom form inputs for posts (No English duplicate input controls will be rendered in form)
+  // Custom form inputs for posts
   const [formTitle, setFormTitle] = useState('');
   const [formCategory, setFormCategory] = useState('');
   const [formTags, setFormTags] = useState('');
@@ -64,7 +64,7 @@ export default function AdminPanel({
   const [formIsPinned, setFormIsPinned] = useState(false);
 
   // Editor specific states
-  const [editorWriteMode, setEditorWriteMode] = useState<boolean>(true); // true = raw editor, false = visual live compile rendering preview
+  const [editorWriteMode, setEditorWriteMode] = useState<boolean>(true);
   const [insertOverlayType, setInsertOverlayType] = useState<'image' | 'video' | 'fontSize' | null>(null);
   
   // Insertion Overlay states
@@ -101,7 +101,6 @@ export default function AdminPanel({
     const newContent = currentText.substring(0, start) + replacement + currentText.substring(end);
     setFormContent(newContent);
 
-    // Refocus and place cursor
     setTimeout(() => {
       textarea.focus();
       const newCursorPos = start + beforeText.length + selectedText.length + afterText.length;
@@ -164,7 +163,8 @@ export default function AdminPanel({
     setInsertOverlayType(null);
   };
 
-  const handleSavePost = (e: React.FormEvent) => {
+  // ========== 修改点：将 handleSavePost 改为 async，并 await 回调 ==========
+  const handleSavePost = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!formTitle || !formContent) {
       alert(locale === 'zh' ? '标题和内容为必填项！' : 'Title and Content are required!');
@@ -179,11 +179,11 @@ export default function AdminPanel({
     const postData: Post = {
       id: editingPost ? editingPost.id : 'post-' + Date.now(),
       title: formTitle,
-      titleEn: formTitle, // Simple automatic synchronization for English schema robustness
+      titleEn: formTitle,
       excerpt: formExcerpt || formContent.slice(0, 100) + '...',
-      excerptEn: formExcerpt || formContent.slice(0, 100) + '...', 
+      excerptEn: formExcerpt || formContent.slice(0, 100) + '...',
       content: formContent,
-      contentEn: formContent, 
+      contentEn: formContent,
       coverImage: formCover || 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&q=80&w=800',
       date: editingPost ? editingPost.date : new Date().toISOString().split('T')[0],
       likes: editingPost ? editingPost.likes : 0,
@@ -195,9 +195,9 @@ export default function AdminPanel({
     };
 
     if (editingPost) {
-      onUpdatePost(postData);
+      await onUpdatePost(postData);
     } else {
-      onAddPost(postData);
+      await onAddPost(postData);
     }
     resetForm();
   };
@@ -217,7 +217,7 @@ export default function AdminPanel({
     <div className="fixed inset-0 z-50 bg-slate-900/40 dark:bg-[#070b13]/85 backdrop-blur-md flex items-center justify-center p-2.5 sm:p-5 overflow-hidden text-slate-800 dark:text-slate-100 font-sans animate-fadeIn">
       <div className="bg-slate-50 dark:bg-slate-900 w-full h-full max-w-7xl rounded-2xl border border-slate-200 dark:border-slate-800 shadow-2xl flex flex-col overflow-hidden transition-all">
         
-        {/* Workspace Controller Top bar (Gemini Style) */}
+        {/* Workspace Controller Top bar */}
         <div className="flex items-center justify-between px-5 py-4 border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950/80">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-sky-500 to-indigo-500 flex items-center justify-center text-white shadow-sm">
@@ -245,7 +245,7 @@ export default function AdminPanel({
         {/* Content Box */}
         <div className="flex-1 flex overflow-hidden">
           
-          {/* Navigation Sidebar of Admin Panel */}
+          {/* Navigation Sidebar */}
           <div className="w-16 sm:w-[220px] border-r border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950/30 p-2 sm:p-4 flex flex-col gap-1.5 shrink-0">
             <button
               onClick={() => { setActiveTab('dashboard'); resetForm(); }}
@@ -333,7 +333,6 @@ export default function AdminPanel({
                   </div>
                 </div>
 
-                {/* Dashboard Greetings */}
                 <div className="bg-gradient-to-r from-indigo-50 to-blue-50 dark:from-slate-950/60 dark:to-slate-900/50 p-6 rounded-2xl border border-indigo-100 dark:border-slate-800/80 space-y-2">
                   <h3 className="text-xs sm:text-sm font-bold text-indigo-700 dark:text-sky-400 uppercase tracking-widest flex items-center gap-1.5">
                     <Sparkles className="w-4 h-4 fill-current text-indigo-500 dark:text-sky-400" />
@@ -346,7 +345,6 @@ export default function AdminPanel({
                   </p>
                 </div>
 
-                {/* Recent publications list */}
                 <div className="bg-white dark:bg-slate-950/30 rounded-xl border border-slate-200 dark:border-slate-800 p-4">
                   <h4 className="text-xs sm:text-sm font-black mb-3 text-slate-800 dark:text-slate-200 flex items-center gap-1.5">
                     <BookOpen className="w-4 h-4 text-sky-500" />
@@ -531,14 +529,12 @@ export default function AdminPanel({
                       />
                     </div>
 
-                    {/* INTERACTIVE COMPONENT: ADVANCED ARTICLE WRITING CONTAINER WITH RICH TOOLBAR AND MODE SWITCHING */}
+                    {/* Editor area (unchanged) */}
                     <div className="space-y-2 border border-slate-200 dark:border-slate-800 rounded-xl overflow-hidden bg-slate-50 dark:bg-slate-950/20 shadow-md">
                       
-                      {/* Editor Toolbar Header */}
                       <div className="flex flex-wrap items-center justify-between gap-2 bg-slate-100 dark:bg-slate-900 px-3 py-2 border-b border-slate-200 dark:border-slate-850">
                         <div className="flex items-center gap-1.5 flex-wrap">
                           
-                          {/* Formatting Buttons */}
                           <button
                             type="button"
                             title={locale === 'zh' ? '大标题 H1' : 'Header 1'}
@@ -593,7 +589,6 @@ export default function AdminPanel({
 
                           <div className="h-4.5 w-px bg-slate-200 dark:bg-slate-700 mx-1" />
 
-                          {/* Dynamic Overlays triggers */}
                           <button
                             type="button"
                             title={locale === 'zh' ? '调设字体大小' : 'Adjust Font size'}
@@ -626,7 +621,6 @@ export default function AdminPanel({
 
                         </div>
 
-                        {/* MODE SWITCH TOGGLE (SWITCH EDITOR OR COMPILED PREVIEW) */}
                         <div className="flex items-center gap-1 bg-white dark:bg-slate-850 p-1.5 rounded-lg border border-slate-200 dark:border-slate-800">
                           <button
                             type="button"
@@ -653,7 +647,6 @@ export default function AdminPanel({
                         </div>
                       </div>
 
-                      {/* INLINE CUSTOM POPUP TO CONTROL INSERT SIZING, URL AND MANUALLY REGULATE WIDTH/HEIGHT */}
                       {insertOverlayType && (
                         <div className="p-3 bg-indigo-50/50 dark:bg-slate-950/60 border-b border-indigo-200 dark:border-slate-800 space-y-3 animate-scaleUp text-xs">
                           {insertOverlayType === 'fontSize' ? (
@@ -731,7 +724,6 @@ export default function AdminPanel({
                         </div>
                       )}
 
-                      {/* Main writing frame with resizable selector */}
                       <div className="relative">
                         {editorWriteMode ? (
                           <textarea
@@ -752,7 +744,6 @@ export default function AdminPanel({
                           </div>
                         )}
                         
-                        {/* Status characters counts in bottom frame */}
                         <div className="absolute right-3.5 bottom-2 font-mono text-[10px] text-slate-400 bg-slate-100/60 dark:bg-slate-800/60 px-1.5 py-0.5 rounded select-none">
                           {formContent.length} chars
                         </div>
@@ -794,7 +785,7 @@ export default function AdminPanel({
               </div>
             )}
 
-            {/* TAB 3: COMMENTS HUB (评论管理 - INSTANT RENDERING WITHOUT AUDIT) */}
+            {/* TAB 3: COMMENTS HUB (unchanged) */}
             {activeTab === 'comments' && (
               <div className="space-y-4 animate-fadeIn">
                 <div className="flex items-center justify-between border-b border-slate-200 dark:border-slate-800 pb-2.5">
@@ -818,7 +809,6 @@ export default function AdminPanel({
                         <img src={comment.avatar} alt="Avatar" className="w-10 h-10 rounded-xl bg-slate-100 border border-slate-200 dark:border-slate-850 shrink-0" />
                         <div className="flex-1 space-y-2.5 min-w-0">
                           
-                          {/* Nickname, Real email, date header */}
                           <div className="flex flex-wrap items-center justify-between gap-1.5 border-b border-slate-100 dark:border-slate-900 pb-1.5">
                             <div className="flex flex-wrap items-center gap-1.5 text-xs">
                               <span className="font-black text-slate-900 dark:text-slate-100 text-sm">{comment.nickname}</span>
@@ -839,13 +829,11 @@ export default function AdminPanel({
                             <span className="text-[10px] text-slate-400 font-mono">{comment.date}</span>
                           </div>
 
-                          {/* Raw markup message content rendered cleanly */}
                           <div 
                             className="text-slate-700 dark:text-slate-350 text-xs sm:text-sm prose dark:prose-invert font-medium bg-slate-50 dark:bg-slate-900/50 p-3 rounded-lg border border-slate-100 dark:border-slate-850"
                             dangerouslySetInnerHTML={{ __html: comment.content }}
                           />
 
-                          {/* Action controls button */}
                           <div className="flex-wrap flex justify-between items-center gap-2 pt-1 border-t border-slate-100 dark:border-slate-900/60">
                             <span className="text-[10px] font-bold text-slate-400">
                               {locale === 'zh' ? '关联文章 ID: ' : 'Thread Post ID: '}
@@ -853,7 +841,6 @@ export default function AdminPanel({
                             </span>
                             
                             <div className="flex items-center gap-1.5 text-xs">
-                              {/* TOGGLE HIDDEN / VISIBLE BUT DIRECTLY REFLECTED AT CLIENTS */}
                               <button
                                 type="button"
                                 onClick={() => onToggleHideComment(comment.id)}
@@ -898,11 +885,10 @@ export default function AdminPanel({
               </div>
             )}
 
-            {/* TAB 4: CATEGORIES & TAGS (FOR INDEX SECTOR FILTERING) */}
+            {/* TAB 4: CATEGORIES & TAGS (unchanged) */}
             {activeTab === 'tags' && (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6 animate-fadeIn">
                 
-                {/* Category Workspace */}
                 <div className="bg-white dark:bg-slate-950/20 p-5 rounded-2xl border border-slate-200 dark:border-slate-800 space-y-4 shadow-sm">
                   <h3 className="text-sm sm:text-base font-black text-slate-800 dark:text-slate-200 flex items-center gap-2">
                     <Layers className="w-4 h-4 text-cyan-550" />
@@ -953,7 +939,6 @@ export default function AdminPanel({
                   </div>
                 </div>
 
-                {/* Tags Workspace */}
                 <div className="bg-white dark:bg-slate-950/20 p-5 rounded-2xl border border-slate-200 dark:border-slate-800 space-y-4 shadow-sm">
                   <h3 className="text-sm sm:text-base font-black text-slate-800 dark:text-slate-200 flex items-center gap-2">
                     <Tag className="w-4 h-4 text-indigo-500" />
@@ -1004,7 +989,7 @@ export default function AdminPanel({
               </div>
             )}
 
-            {/* TAB 5: WEBSITE SETTINGS - MANUALLY REGULATE TRUTHFUL STATE STATS */}
+            {/* TAB 5: WEBSITE SETTINGS (unchanged) */}
             {activeTab === 'profile' && (
               <div className="bg-white dark:bg-slate-950/20 p-5 rounded-2xl border border-slate-200 dark:border-slate-800 space-y-6 shadow-sm animate-fadeIn text-xs sm:text-sm">
                 <div>
