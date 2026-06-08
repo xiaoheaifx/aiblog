@@ -32,21 +32,17 @@ export default function App() {
     return (saved === 'light' || saved === 'dark') ? saved : 'light';
   });
 
-  // Blog states – posts now loaded from D1, others stay localStorage
+  // Blog states – all loaded from D1 database
   const [posts, setPosts] = useState<Post[]>([]);
   const [loadingPosts, setLoadingPosts] = useState(true);
 
-  const [comments, setComments] = useState<Comment[]>(() => {
-    const saved = localStorage.getItem('blog_comments');
-    if (saved) return JSON.parse(saved);
-    return INITIAL_COMMENTS;
-  });
+  const [comments, setComments] = useState<Comment[]>([]);
+  const [loadingComments, setLoadingComments] = useState(true);
 
   const [stats, setStats] = useState<UserStats>(() => {
-    const saved = localStorage.getItem('blog_stats');
-    const parsed = saved ? JSON.parse(saved) : {
-      articleCount: INITIAL_POSTS.length,
-      commentCount: INITIAL_COMMENTS.length,
+    const parsed = {
+      articleCount: 0,
+      commentCount: 0,
       visitCount: 3820
     };
     
@@ -54,27 +50,16 @@ export default function App() {
     const hasVisitedThisSession = sessionStorage.getItem('session_visited');
     if (!hasVisitedThisSession) {
       sessionStorage.setItem('session_visited', 'true');
-      const updated = {
+      return {
         ...parsed,
         visitCount: parsed.visitCount + 1
       };
-      localStorage.setItem('blog_stats', JSON.stringify(updated));
-      return updated;
     }
     return parsed;
   });
 
-  const [categories, setCategories] = useState<string[]>(() => {
-    const saved = localStorage.getItem('blog_categories');
-    if (saved) return JSON.parse(saved);
-    return ['技术干货', '行业观察', '随笔生活'];
-  });
-
-  const [tags, setTags] = useState<string[]>(() => {
-    const saved = localStorage.getItem('blog_tags');
-    if (saved) return JSON.parse(saved);
-    return ['Gemini', 'LLM', 'AI Agent', 'API', '向量检索', 'Edge AI', 'WebGPU', 'Gemma', '前端设计', '编程未来', '深度检索'];
-  });
+  const [categories, setCategories] = useState<string[]>([]);
+  const [tags, setTags] = useState<string[]>([]);
 
   // App navigation state
   const [currentTab, setCurrentTab] = useState<'home' | 'articles' | 'about' | 'privacy'>('home');
@@ -121,7 +106,7 @@ export default function App() {
   const [replyEmail, setReplyEmail] = useState('');
   const [replyCommentVal, setReplyCommentVal] = useState('');
 
-  // ==================== 从 D1 加载文章 ====================
+  // ==================== 从 D1 加载数据 ====================
   const fetchPosts = async () => {
     setLoadingPosts(true);
     try {
@@ -129,6 +114,8 @@ export default function App() {
       if (!res.ok) throw new Error('Failed to fetch posts');
       const data = await res.json();
       setPosts(data);
+      // 更新文章计数
+      setStats(prev => ({ ...prev, articleCount: data.length }));
     } catch (err) {
       console.error('Failed to load posts', err);
       triggerToast(locale === 'zh' ? '加载文章失败，请刷新重试' : 'Failed to load posts');
@@ -137,8 +124,47 @@ export default function App() {
     }
   };
 
+  const fetchComments = async () => {
+    setLoadingComments(true);
+    try {
+      const res = await fetch('/api/comments');
+      if (!res.ok) throw new Error('Failed to fetch comments');
+      const data = await res.json();
+      setComments(data);
+      // 更新评论计数
+      setStats(prev => ({ ...prev, commentCount: data.length }));
+    } catch (err) {
+      console.error('Failed to load comments', err);
+    } finally {
+      setLoadingComments(false);
+    }
+  };
+
+  const fetchSettings = async () => {
+    try {
+      const res = await fetch('/api/settings');
+      if (!res.ok) throw new Error('Failed to fetch settings');
+      const data = await res.json();
+      setCategories(data.categories || []);
+      setTags(data.tags || []);
+      if (data.settings) {
+        setStats(prev => ({
+          ...prev,
+          visitCount: data.settings.visitCount ?? prev.visitCount
+        }));
+      }
+    } catch (err) {
+      console.error('Failed to load settings', err);
+      // 设置默认值
+      setCategories(['技术干货', '行业观察', '随笔生活']);
+      setTags(['Gemini', 'LLM', 'AI Agent', 'API', '向量检索', 'Edge AI', 'WebGPU', 'Gemma', '前端设计', '编程未来', '深度检索']);
+    }
+  };
+
   useEffect(() => {
     fetchPosts();
+    fetchComments();
+    fetchSettings();
   }, []);
 
   // Save locale, theme to localStorage
@@ -154,23 +180,6 @@ export default function App() {
       document.documentElement.classList.remove('dark');
     }
   }, [theme]);
-
-  // Save comments, stats, categories, tags to localStorage (posts are saved in D1, not localStorage)
-  useEffect(() => {
-    localStorage.setItem('blog_comments', JSON.stringify(comments));
-  }, [comments]);
-
-  useEffect(() => {
-    localStorage.setItem('blog_stats', JSON.stringify(stats));
-  }, [stats]);
-
-  useEffect(() => {
-    localStorage.setItem('blog_categories', JSON.stringify(categories));
-  }, [categories]);
-
-  useEffect(() => {
-    localStorage.setItem('blog_tags', JSON.stringify(tags));
-  }, [tags]);
 
   // Slideshow automatic transition timer
   useEffect(() => {
@@ -326,38 +335,188 @@ export default function App() {
   }
 };
 
-  // 评论管理（仍然使用 localStorage）
-  const handleDeleteComment = (id: string) => {
-    const updated = comments.filter(c => c.id !== id);
-    setComments(updated);
-    setStats(prev => ({ ...prev, commentCount: updated.length }));
-    triggerToast(locale === 'zh' ? '评论已被成功物理删除。' : 'Comment deleted.');
-  };
-
-  const handleToggleHideComment = (id: string) => {
-    const updated = comments.map(c => c.id === id ? { ...c, isHidden: !c.isHidden } : c);
-    setComments(updated);
-    triggerToast(locale === 'zh' ? '评论显示状态已切换。' : 'Comment visibility updated.');
-  };
-
-  const handleAddCategory = (newCat: string) => {
-    if (!categories.includes(newCat)) {
-      setCategories([...categories, newCat]);
+  // ==================== 评论管理（调用 D1 API）====================
+  const handleDeleteComment = async (id: string) => {
+    if (!authToken) {
+      triggerToast(locale === 'zh' ? '请先登录' : 'Please login first');
+      return;
+    }
+    try {
+      const res = await fetch(`/api/comments/${id}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Basic ${authToken}`
+        }
+      });
+      if (res.ok) {
+        const updated = comments.filter(c => c.id !== id);
+        setComments(updated);
+        setStats(prev => ({ ...prev, commentCount: updated.length }));
+        triggerToast(locale === 'zh' ? '评论已被成功物理删除。' : 'Comment deleted.');
+      } else if (res.status === 401) {
+        triggerToast(locale === 'zh' ? '认证失败，请重新登录' : 'Auth failed, please login again');
+        handleLogout();
+      } else {
+        throw new Error('API error');
+      }
+    } catch (err) {
+      triggerToast(locale === 'zh' ? '删除失败，请重试' : 'Failed to delete comment');
     }
   };
 
-  const handleAddTag = (newTag: string) => {
-    if (!tags.includes(newTag)) {
-      setTags([...tags, newTag]);
+  const handleToggleHideComment = async (id: string) => {
+    if (!authToken) {
+      triggerToast(locale === 'zh' ? '请先登录' : 'Please login first');
+      return;
+    }
+    try {
+      const comment = comments.find(c => c.id === id);
+      if (!comment) return;
+      
+      const res = await fetch(`/api/comments/${id}/toggle-hide`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Basic ${authToken}`
+        },
+        body: JSON.stringify({ isHidden: !comment.isHidden })
+      });
+      if (res.ok) {
+        const updated = comments.map(c => c.id === id ? { ...c, isHidden: !c.isHidden } : c);
+        setComments(updated);
+        triggerToast(locale === 'zh' ? '评论显示状态已切换。' : 'Comment visibility updated.');
+      } else if (res.status === 401) {
+        triggerToast(locale === 'zh' ? '认证失败，请重新登录' : 'Auth failed, please login again');
+        handleLogout();
+      } else {
+        throw new Error('API error');
+      }
+    } catch (err) {
+      triggerToast(locale === 'zh' ? '操作失败，请重试' : 'Failed to toggle comment');
     }
   };
 
-  const handleDeleteCategory = (cat: string) => {
-    setCategories(categories.filter(c => c !== cat));
+  // ==================== 分类/标签管理（调用 D1 API）====================
+  const handleAddCategory = async (newCat: string) => {
+    if (!authToken) {
+      triggerToast(locale === 'zh' ? '请先登录' : 'Please login first');
+      return;
+    }
+    if (categories.includes(newCat)) {
+      triggerToast(locale === 'zh' ? '该分类已存在' : 'Category already exists');
+      return;
+    }
+    try {
+      const res = await fetch('/api/settings/categories', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Basic ${authToken}`
+        },
+        body: JSON.stringify({ type: 'category', name: newCat })
+      });
+      if (res.ok) {
+        const data = await res.json();
+        if (!data.exists) {
+          setCategories([...categories, newCat]);
+        }
+        triggerToast(locale === 'zh' ? '分类添加成功！' : 'Category added successfully!');
+      } else if (res.status === 401) {
+        triggerToast(locale === 'zh' ? '认证失败，请重新登录' : 'Auth failed, please login again');
+        handleLogout();
+      } else {
+        throw new Error('API error');
+      }
+    } catch (err) {
+      triggerToast(locale === 'zh' ? '添加失败，请重试' : 'Failed to add category');
+    }
   };
 
-  const handleDeleteTag = (tag: string) => {
-    setTags(tags.filter(t => t !== tag));
+  const handleAddTag = async (newTag: string) => {
+    if (!authToken) {
+      triggerToast(locale === 'zh' ? '请先登录' : 'Please login first');
+      return;
+    }
+    if (tags.includes(newTag)) {
+      triggerToast(locale === 'zh' ? '该标签已存在' : 'Tag already exists');
+      return;
+    }
+    try {
+      const res = await fetch('/api/settings/tags', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Basic ${authToken}`
+        },
+        body: JSON.stringify({ type: 'tag', name: newTag })
+      });
+      if (res.ok) {
+        const data = await res.json();
+        if (!data.exists) {
+          setTags([...tags, newTag]);
+        }
+        triggerToast(locale === 'zh' ? '标签添加成功！' : 'Tag added successfully!');
+      } else if (res.status === 401) {
+        triggerToast(locale === 'zh' ? '认证失败，请重新登录' : 'Auth failed, please login again');
+        handleLogout();
+      } else {
+        throw new Error('API error');
+      }
+    } catch (err) {
+      triggerToast(locale === 'zh' ? '添加失败，请重试' : 'Failed to add tag');
+    }
+  };
+
+  const handleDeleteCategory = async (cat: string) => {
+    if (!authToken) {
+      triggerToast(locale === 'zh' ? '请先登录' : 'Please login first');
+      return;
+    }
+    try {
+      const res = await fetch(`/api/settings/categories/${encodeURIComponent(cat)}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Basic ${authToken}`
+        }
+      });
+      if (res.ok) {
+        setCategories(categories.filter(c => c !== cat));
+        triggerToast(locale === 'zh' ? '分类已被删除。' : 'Category deleted.');
+      } else if (res.status === 401) {
+        triggerToast(locale === 'zh' ? '认证失败，请重新登录' : 'Auth failed, please login again');
+        handleLogout();
+      } else {
+        throw new Error('API error');
+      }
+    } catch (err) {
+      triggerToast(locale === 'zh' ? '删除失败，请重试' : 'Failed to delete category');
+    }
+  };
+
+  const handleDeleteTag = async (tag: string) => {
+    if (!authToken) {
+      triggerToast(locale === 'zh' ? '请先登录' : 'Please login first');
+      return;
+    }
+    try {
+      const res = await fetch(`/api/settings/tags/${encodeURIComponent(tag)}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Basic ${authToken}`
+        }
+      });
+      if (res.ok) {
+        setTags(tags.filter(t => t !== tag));
+        triggerToast(locale === 'zh' ? '标签已被删除。' : 'Tag deleted.');
+      } else if (res.status === 401) {
+        triggerToast(locale === 'zh' ? '认证失败，请重新登录' : 'Auth failed, please login again');
+        handleLogout();
+      } else {
+        throw new Error('API error');
+      }
+    } catch (err) {
+      triggerToast(locale === 'zh' ? '删除失败，请重试' : 'Failed to delete tag');
+    }
   };
 
   // Filtering Logic for articles
@@ -398,8 +557,8 @@ export default function App() {
 
   const filteredPosts = getFilteredPosts();
 
-  // Submit main top-level comment
-  const handlePublishComment = (e: React.FormEvent, postId: string) => {
+  // Submit main top-level comment (save to D1)
+  const handlePublishComment = async (e: React.FormEvent, postId: string) => {
     e.preventDefault();
     if (!newNickname.trim() || !newEmail.trim()) {
       alert(translations[locale].commentRequiredTip);
@@ -422,15 +581,31 @@ export default function App() {
       date: new Date().toISOString().replace('T', ' ').slice(0, 16)
     };
 
-    const updatedComments = [newComment, ...comments];
-    setComments(updatedComments);
-    setStats(prev => ({ ...prev, commentCount: updatedComments.length }));
-    setNewCommentVal('');
-    triggerToast(translations[locale].commentSuccess);
+    try {
+      const res = await fetch('/api/comments', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(newComment)
+      });
+      if (res.ok) {
+        const updatedComments = [newComment, ...comments];
+        setComments(updatedComments);
+        setStats(prev => ({ ...prev, commentCount: updatedComments.length }));
+        setNewCommentVal('');
+        triggerToast(translations[locale].commentSuccess);
+      } else {
+        throw new Error('Failed to save comment');
+      }
+    } catch (err) {
+      console.error('Failed to save comment:', err);
+      triggerToast(locale === 'zh' ? '评论保存失败，请重试' : 'Failed to save comment');
+    }
   };
 
-  // Submit specific comment reply
-  const handlePublishReply = (e: React.FormEvent, commentId: string, replyToName: string) => {
+  // Submit specific comment reply (save to D1)
+  const handlePublishReply = async (e: React.FormEvent, commentId: string, replyToName: string) => {
     e.preventDefault();
     if (!replyNickname.trim() || !replyEmail.trim()) {
       alert(translations[locale].commentRequiredTip);
@@ -455,12 +630,28 @@ export default function App() {
       replyTo: replyToName
     };
 
-    const updatedComments = [newReply, ...comments];
-    setComments(updatedComments);
-    setStats(prev => ({ ...prev, commentCount: updatedComments.length }));
-    setReplyingToCommentId(null);
-    setReplyCommentVal('');
-    triggerToast(translations[locale].commentSuccess);
+    try {
+      const res = await fetch('/api/comments', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(newReply)
+      });
+      if (res.ok) {
+        const updatedComments = [newReply, ...comments];
+        setComments(updatedComments);
+        setStats(prev => ({ ...prev, commentCount: updatedComments.length }));
+        setReplyingToCommentId(null);
+        setReplyCommentVal('');
+        triggerToast(translations[locale].commentSuccess);
+      } else {
+        throw new Error('Failed to save reply');
+      }
+    } catch (err) {
+      console.error('Failed to save reply:', err);
+      triggerToast(locale === 'zh' ? '回复保存失败，请重试' : 'Failed to save reply');
+    }
   };
 
   // Handle direct sharing
