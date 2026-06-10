@@ -129,20 +129,13 @@ export default function AdminPanel({
       isPinned: formIsPinned
     };
 
-    if (editingPost) {
+        if (editingPost) {
       await onUpdatePost(postData);
     } else {
       await onAddPost(postData);
     }
-    // 保存成功后只清空表单，保持在编辑模式，让用户可以继续编辑或手动返回列表
-    setFormTitle('');
-    setFormCategory(categories[0] || '技术干货');
-    setFormTags('');
-    setFormCover('https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&q=80&w=800');
-    setFormExcerpt('');
-    setFormContent('');
-    setFormIsPinned(false);
-        setEditingPost(null);
+    alert(locale === 'zh' ? '文章发布成功！' : 'Post published successfully!');
+    resetForm();
   };
 
   const handleUpdateViews = () => {

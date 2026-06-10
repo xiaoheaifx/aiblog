@@ -484,7 +484,7 @@ export default function App() {
       return;
     }
     try {
-      const res = await fetch(`/api/settings/categories/${encodeURIComponent(cat)}`, {
+      const res = await fetch(`/api/manage/cat/${encodeURIComponent(cat)}`, {
         method: 'DELETE',
         headers: {
           'Authorization': `Basic ${authToken}`
@@ -510,8 +510,7 @@ export default function App() {
       return;
     }
     try {
-      const res = await fetch(`/api/settings/tags/${encodeURIComponent(tag)}`, {
-        method: 'DELETE',
+      const res = await fetch(`/api/manage/tag/${encodeURIComponent(tag)}`, {
         headers: {
           'Authorization': `Basic ${authToken}`
         }
