@@ -1,0 +1,6 @@
+{
+  "name": "XiaoHe AIShare",
+  "description": "A modern, highly-polished personal blog in Chinese and English featuring article cards, a slideshow, visit statistics, light/dark mode, comments, and an admin panel.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
