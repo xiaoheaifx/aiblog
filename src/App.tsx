@@ -84,9 +84,8 @@ export default function App() {
   const [showAdminPanel, setShowAdminPanel] = useState(false);
   
   // Basic Auth token (Base64)
-  const [authToken, setAuthToken] = useState<string | null>(() => {
-    // Optionally restore from sessionStorage (not stored for security)
-    return null;
+    const [authToken, setAuthToken] = useState<string | null>(() => {
+    return sessionStorage.getItem('blog_auth_token');
   });
 
   // Header dropdown state
@@ -214,7 +213,8 @@ export default function App() {
       }
       
       // 验证成功
-      setAuthToken(token);
+            setAuthToken(token);
+      sessionStorage.setItem('blog_auth_token', token);
       setIsAdmin(true);
       localStorage.setItem('blog_is_admin', 'true');
       setShowLoginModal(false);
@@ -228,8 +228,9 @@ export default function App() {
   };
 
   const handleLogout = () => {
-    setIsAdmin(false);
+        setIsAdmin(false);
     setAuthToken(null);
+    sessionStorage.removeItem('blog_auth_token');
     localStorage.setItem('blog_is_admin', 'false');
     setShowAdminPanel(false);
     triggerToast(locale === 'zh' ? '已安全登出后台管理系统。' : 'Log out successful.');
