@@ -511,7 +511,8 @@ export default function App() {
       return;
     }
     try {
-      const res = await fetch(`/api/manage/tag/${encodeURIComponent(tag)}`, {
+            const res = await fetch(`/api/manage/tag/${encodeURIComponent(tag)}`, {
+        method: 'DELETE',
         headers: {
           'Authorization': `Basic ${authToken}`
         }
