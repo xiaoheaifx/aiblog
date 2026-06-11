@@ -485,19 +485,21 @@ export default function App() {
       return;
     }
     try {
-      const res = await fetch(`/api/settings/categories/${encodeURIComponent(cat)}`, {
+      const res = await fetch(`/api/manage/cat/${encodeURIComponent(cat)}`, {
         method: 'DELETE',
         headers: {
           'Authorization': `Basic ${authToken}`
         }
       });
       if (res.ok) {
-        await fetchSettings(); // 重新加载分类和标签
+        setCategories(categories.filter(c => c !== cat));
         triggerToast(locale === 'zh' ? '分类已被删除。' : 'Category deleted.');
       } else if (res.status === 401) {
         triggerToast(locale === 'zh' ? '认证失败，请重新登录' : 'Auth failed, please login again');
         handleLogout();
       } else {
+        const errData = await res.json().catch(() => ({}));
+        console.error('Delete category failed:', res.status, errData);
         throw new Error('API error');
       }
     } catch (err) {
@@ -511,19 +513,21 @@ export default function App() {
       return;
     }
     try {
-      const res = await fetch(`/api/settings/tags/${encodeURIComponent(tag)}`, {
+      const res = await fetch(`/api/manage/tag/${encodeURIComponent(tag)}`, {
         method: 'DELETE',
         headers: {
           'Authorization': `Basic ${authToken}`
         }
       });
       if (res.ok) {
-        await fetchSettings(); // 重新加载分类和标签
+        setTags(tags.filter(t => t !== tag));
         triggerToast(locale === 'zh' ? '标签已被删除。' : 'Tag deleted.');
       } else if (res.status === 401) {
         triggerToast(locale === 'zh' ? '认证失败，请重新登录' : 'Auth failed, please login again');
         handleLogout();
       } else {
+        const errData = await res.json().catch(() => ({}));
+        console.error('Delete tag failed:', res.status, errData);
         throw new Error('API error');
       }
     } catch (err) {

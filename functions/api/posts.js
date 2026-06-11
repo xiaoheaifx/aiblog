@@ -35,7 +35,7 @@ export async function onRequestGet({ env }) {
   }
   try {
     const { results } = await env.DB.prepare(
-      `SELECT id, title, titleEn, content, contentEn, excerpt, excerptEn, coverImage, created_at AS date, likes, views, category, categoryEn, tags, isPinned
+      `SELECT id, title, content, excerpt, coverImage, created_at AS date, likes, views, category, tags, isPinned
        FROM posts ORDER BY isPinned DESC, created_at DESC`
     ).all();
 
@@ -56,12 +56,17 @@ export async function onRequestGet({ env }) {
         tags: parsedTags,
         isPinned: !!p.isPinned,
         likes: p.likes || 0,
-        views: p.views || 0
+        views: p.views || 0,
+        // 提供前端需要的双语字段默认值（如果数据库还没有这些列）
+        titleEn: p.titleEn || '',
+        contentEn: p.contentEn || '',
+        excerptEn: p.excerptEn || '',
+        categoryEn: p.categoryEn || ''
       };
     });
     return successResponse(posts);
   } catch (error) {
-    console.error(error);
+    console.error('GET /api/posts error:', error);
     return errorResponse(`Failed to fetch posts: ${error.message}`);
   }
 }
