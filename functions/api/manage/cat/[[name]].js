@@ -7,7 +7,7 @@ function checkAuth(request, env) {
   const credentials = atob(base64Credentials);
   const [username, password] = credentials.split(':');
   const validUsername = 'xiaohe';
-  const validPassword = env.ADMIN_PASS;
+  const validPassword = env.ADMIN_PASS || 'xiaohe@5200';
   return username === validUsername && password === validPassword;
 }
 
