@@ -129,13 +129,17 @@ export default function AdminPanel({
       isPinned: formIsPinned
     };
 
-        if (editingPost) {
-      await onUpdatePost(postData);
+    let success = false;
+    if (editingPost) {
+      success = await onUpdatePost(postData);
     } else {
-      await onAddPost(postData);
+      success = await onAddPost(postData);
     }
-    alert(locale === 'zh' ? '文章发布成功！' : 'Post published successfully!');
-    resetForm();
+
+    if (success) {
+      alert(locale === 'zh' ? '文章发布成功！' : 'Post published successfully!');
+      resetForm();
+    }
   };
 
   const handleUpdateViews = () => {

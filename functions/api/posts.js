@@ -84,7 +84,7 @@ export async function onRequestPost({ request, env }) {
     const isPinnedInt = isPinned ? 1 : 0;
     const defaultCover = 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&q=80&w=800';
 
-    const { success } = await env.DB.prepare(
+    await env.DB.prepare(
       `INSERT INTO posts (id, title, content, excerpt, coverImage, likes, views, category, tags, isPinned)
        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
     ).bind(
@@ -100,8 +100,7 @@ export async function onRequestPost({ request, env }) {
       isPinnedInt
     ).run();
 
-    if (success) return successResponse({ success: true, id });
-    else return errorResponse('Failed to create post');
+    return successResponse({ success: true, id });
   } catch (error) {
     console.error(error);
     return errorResponse(`Internal error: ${error.message}`);
@@ -148,9 +147,8 @@ export async function onRequestDelete({ request, env }) {
   try {
     const url = new URL(request.url);
     const id = url.pathname.split('/').pop();
-    const { success } = await env.DB.prepare("DELETE FROM posts WHERE id = ?").bind(id).run();
-    if (success) return successResponse({ success: true });
-    else return errorResponse('Post not found', 404);
+    await env.DB.prepare("DELETE FROM posts WHERE id = ?").bind(id).run();
+    return successResponse({ success: true });
   } catch (error) {
     console.error(error);
     return errorResponse(`Failed to delete: ${error.message}`);

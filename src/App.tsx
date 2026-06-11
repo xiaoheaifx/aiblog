@@ -237,10 +237,10 @@ export default function App() {
   };
 
   // ==================== 文章 CRUD（调用 D1 API，带 Basic Auth）====================
-  const handleAddPost = async (newPost: Post) => {
+  const handleAddPost = async (newPost: Post): Promise<boolean> => {
     if (!authToken) {
       triggerToast(locale === 'zh' ? '请先登录' : 'Please login first');
-      return;
+      return false;
     }
     try {
       const res = await fetch('/api/posts', {
@@ -252,22 +252,32 @@ export default function App() {
         body: JSON.stringify(newPost)
       });
       if (res.ok) {
-        await fetchPosts(); // 重新加载文章列表
+        await fetchPosts();
         setStats(prev => ({ ...prev, articleCount: posts.length + 1 }));
         triggerToast(locale === 'zh' ? '新文章发表成功！' : 'Post created successfully!');
+        return true;
       } else if (res.status === 401) {
         triggerToast(locale === 'zh' ? '认证失败，请重新登录' : 'Auth failed, please login again');
         handleLogout();
+        return false;
       } else {
-        throw new Error('API error');
+        const errData = await res.json().catch(() => ({}));
+        console.error('Create post failed:', res.status, errData);
+        triggerToast(locale === 'zh' ? `发表失败：${errData.error || res.status}` : `Failed: ${errData.error || res.status}`);
+        return false;
       }
     } catch (err) {
+      console.error('Create post error:', err);
       triggerToast(locale === 'zh' ? '发表失败，请重试' : 'Failed to create post');
+      return false;
     }
   };
 
-  const handleUpdatePost = async (updatedPost: Post) => {
-    if (!authToken) return;
+  const handleUpdatePost = async (updatedPost: Post): Promise<boolean> => {
+    if (!authToken) {
+      triggerToast(locale === 'zh' ? '请先登录' : 'Please login first');
+      return false;
+    }
     try {
       const res = await fetch(`/api/posts/${updatedPost.id}`, {
         method: 'PUT',
@@ -280,14 +290,21 @@ export default function App() {
       if (res.ok) {
         await fetchPosts();
         triggerToast(locale === 'zh' ? '文章内容更新成功！' : 'Post updated successfully!');
+        return true;
       } else if (res.status === 401) {
         triggerToast(locale === 'zh' ? '认证失败，请重新登录' : 'Auth failed, please login again');
         handleLogout();
+        return false;
       } else {
-        throw new Error('API error');
+        const errData = await res.json().catch(() => ({}));
+        console.error('Update post failed:', res.status, errData);
+        triggerToast(locale === 'zh' ? `更新失败：${errData.error || res.status}` : `Failed: ${errData.error || res.status}`);
+        return false;
       }
     } catch (err) {
+      console.error('Update post error:', err);
       triggerToast(locale === 'zh' ? '更新失败，请重试' : 'Failed to update post');
+      return false;
     }
   };
 

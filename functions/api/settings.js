@@ -135,12 +135,11 @@ export async function onRequestDelete({ request, env }) {
       return errorResponse('Invalid type', 400);
     }
 
-    const { success } = await env.DB.prepare(
+    await env.DB.prepare(
       `DELETE FROM ${table} WHERE name = ?`
     ).bind(name).run();
 
-    if (success) return successResponse({ success: true });
-    else return errorResponse('Not found', 404);
+    return successResponse({ success: true });
   } catch (error) {
     console.error(error);
     return errorResponse(`Failed to delete: ${error.message}`);
