@@ -7,3 +7,7 @@ pages_build_output_dir = "./dist"
 binding = "DB"
 database_name = "blog"
 database_id = "fe2de546-e764-44e2-b1b7-358a4e7f46f5"
+
+# Environment variables
+[vars]
+ADMIN_PASS = "xiaohe@5200"
