@@ -35,7 +35,7 @@ export async function onRequestGet({ env }) {
   }
   try {
     const { results } = await env.DB.prepare(
-      `SELECT id, title, content, excerpt, coverImage, created_at AS date, likes, views, category, tags, isPinned 
+      `SELECT id, title, titleEn, content, contentEn, excerpt, excerptEn, coverImage, created_at AS date, likes, views, category, categoryEn, tags, isPinned
        FROM posts ORDER BY isPinned DESC, created_at DESC`
     ).all();
 
@@ -51,7 +51,13 @@ export async function onRequestGet({ env }) {
           }
         }
       }
-      return { ...p, tags: parsedTags };
+      return {
+        ...p,
+        tags: parsedTags,
+        isPinned: !!p.isPinned,
+        likes: p.likes || 0,
+        views: p.views || 0
+      };
     });
     return successResponse(posts);
   } catch (error) {
