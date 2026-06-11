@@ -73,6 +73,7 @@ export default function App() {
 
   // Slideshow state
   const [slideIndex, setSlideIndex] = useState(0);
+  const [carouselPosts, setCarouselPosts] = useState<Post[]>([]);
 
   // Modals / Authentication
   const [showLoginModal, setShowLoginModal] = useState(false);
@@ -113,6 +114,14 @@ export default function App() {
       if (!res.ok) throw new Error('Failed to fetch posts');
       const data = await res.json();
       setPosts(data);
+      // 设置幻灯片文章：最多取3篇最新的文章，如果只有1篇就只显示1张
+      const uniquePosts = data.filter((post: Post, index: number, self: Post[]) => 
+        index === self.findIndex((p: Post) => p.id === post.id)
+      );
+      const topPosts = uniquePosts.slice(0, 3);
+      setCarouselPosts(topPosts.length > 1 ? topPosts : (topPosts.length === 1 ? topPosts : []));
+      // 重置幻灯片索引
+      setSlideIndex(0);
       // 更新文章计数
       setStats(prev => ({ ...prev, articleCount: data.length }));
     } catch (err) {
@@ -182,11 +191,12 @@ export default function App() {
 
   // Slideshow automatic transition timer
   useEffect(() => {
+    if (carouselPosts.length <= 1) return;
     const timer = setInterval(() => {
-      setSlideIndex(prev => (prev + 1) % INITIAL_SLIDES.length);
+      setSlideIndex(prev => (prev + 1) % carouselPosts.length);
     }, 7000);
     return () => clearInterval(timer);
-  }, []);
+  }, [carouselPosts.length]);
 
   // Alert handler
   const triggerToast = (msg: string) => {
@@ -980,53 +990,65 @@ export default function App() {
             <div className="space-y-8 animate-fadeIn">
               {/* Slideshow */}
               <div id="hero-carousel" className="relative group overflow-hidden rounded-2xl bg-slate-900 border border-slate-200/10 shadow-xl h-[280px] sm:h-[400px]">
-                <img 
-                  src={INITIAL_SLIDES[slideIndex].image} 
-                  alt="Post banner" 
-                  className="absolute inset-0 w-full h-full object-cover opacity-60 group-hover:scale-[101%] transition-all duration-700" 
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/20 to-transparent" />
-                <div className="absolute bottom-0 left-0 right-0 p-6 sm:p-10 text-left space-y-2.5">
-                  <span className="inline-block bg-sky-500 text-white font-bold tracking-widest uppercase text-[10px] px-2.5 py-0.5 rounded-full shadow-md">
-                    {locale === 'zh' ? '热文推荐' : 'Featured News'}
-                  </span>
-                  <h2 className="text-lg sm:text-2xl font-extrabold text-white leading-snug drop-shadow-md">
-                    {locale === 'zh' ? INITIAL_SLIDES[slideIndex].title : INITIAL_SLIDES[slideIndex].titleEn}
-                  </h2>
-                  <p className="text-xs sm:text-sm text-slate-300 max-w-2xl font-medium line-clamp-2 leading-relaxed">
-                    {locale === 'zh' ? INITIAL_SLIDES[slideIndex].description : INITIAL_SLIDES[slideIndex].descriptionEn}
-                  </p>
-                  <div className="pt-2">
-                    <button
-                      onClick={() => handleSelectPost(INITIAL_SLIDES[slideIndex].postId)}
-                      className="bg-white hover:bg-sky-500 hover:text-white text-slate-900 font-bold text-xs px-4 py-2 rounded-xl transition-all shadow-lg flex items-center gap-1.5 hover:shadow-sky-500/20"
-                    >
-                      <span>{translations[locale].slideReadMore}</span>
-                      <ChevronRightCircle className="w-3.5 h-3.5" />
-                    </button>
-                  </div>
-                </div>
-                <button
-                  onClick={() => setSlideIndex(prev => (prev - 1 + INITIAL_SLIDES.length) % INITIAL_SLIDES.length)}
-                  className="absolute left-4 top-1/2 -translate-y-1/2 p-2 rounded-full bg-slate-950/50 text-white hover:bg-slate-950/80 transition-all opacity-0 group-hover:opacity-100 hidden sm:block shadow-md border border-white/5"
-                >
-                  <ChevronLeft className="w-5 h-5" />
-                </button>
-                <button
-                  onClick={() => setSlideIndex(prev => (prev + 1) % INITIAL_SLIDES.length)}
-                  className="absolute right-4 top-1/2 -translate-y-1/2 p-2 rounded-full bg-slate-950/50 text-white hover:bg-slate-950/80 transition-all opacity-0 group-hover:opacity-100 hidden sm:block shadow-md border border-white/5"
-                >
-                  <ChevronRight className="w-5 h-5" />
-                </button>
-                <div className="absolute right-6 top-6 flex gap-1.5">
-                  {INITIAL_SLIDES.map((_, idx) => (
-                    <button
-                      key={idx}
-                      onClick={() => setSlideIndex(idx)}
-                      className={`h-1.5 transition-all rounded-full ${idx === slideIndex ? 'w-6 bg-sky-500' : 'w-1.5 bg-white/50'}`}
+                {carouselPosts.length > 0 ? (
+                  <>
+                    <img 
+                      src={carouselPosts[slideIndex]?.coverImage || 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&q=80&w=1200'} 
+                      alt="Post banner" 
+                      className="absolute inset-0 w-full h-full object-cover opacity-60 group-hover:scale-[101%] transition-all duration-700" 
                     />
-                  ))}
-                </div>
+                    <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/20 to-transparent" />
+                    <div className="absolute bottom-0 left-0 right-0 p-6 sm:p-10 text-left space-y-2.5">
+                      <span className="inline-block bg-sky-500 text-white font-bold tracking-widest uppercase text-[10px] px-2.5 py-0.5 rounded-full shadow-md">
+                        {locale === 'zh' ? '热文推荐' : 'Featured News'}
+                      </span>
+                      <h2 className="text-lg sm:text-2xl font-extrabold text-white leading-snug drop-shadow-md">
+                        {locale === 'zh' ? carouselPosts[slideIndex]?.title : carouselPosts[slideIndex]?.titleEn || carouselPosts[slideIndex]?.title}
+                      </h2>
+                      <p className="text-xs sm:text-sm text-slate-300 max-w-2xl font-medium line-clamp-2 leading-relaxed">
+                        {locale === 'zh' ? carouselPosts[slideIndex]?.excerpt : carouselPosts[slideIndex]?.excerptEn || carouselPosts[slideIndex]?.excerpt}
+                      </p>
+                      <div className="pt-2">
+                        <button
+                          onClick={() => handleSelectPost(carouselPosts[slideIndex]?.id)}
+                          className="bg-white hover:bg-sky-500 hover:text-white text-slate-900 font-bold text-xs px-4 py-2 rounded-xl transition-all shadow-lg flex items-center gap-1.5 hover:shadow-sky-500/20"
+                        >
+                          <span>{translations[locale].slideReadMore}</span>
+                          <ChevronRightCircle className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                    </div>
+                    {carouselPosts.length > 1 && (
+                      <>
+                        <button
+                          onClick={() => setSlideIndex(prev => (prev - 1 + carouselPosts.length) % carouselPosts.length)}
+                          className="absolute left-4 top-1/2 -translate-y-1/2 p-2 rounded-full bg-slate-950/50 text-white hover:bg-slate-950/80 transition-all opacity-0 group-hover:opacity-100 hidden sm:block shadow-md border border-white/5"
+                        >
+                          <ChevronLeft className="w-5 h-5" />
+                        </button>
+                        <button
+                          onClick={() => setSlideIndex(prev => (prev + 1) % carouselPosts.length)}
+                          className="absolute right-4 top-1/2 -translate-y-1/2 p-2 rounded-full bg-slate-950/50 text-white hover:bg-slate-950/80 transition-all opacity-0 group-hover:opacity-100 hidden sm:block shadow-md border border-white/5"
+                        >
+                          <ChevronRight className="w-5 h-5" />
+                        </button>
+                      </>
+                    )}
+                    <div className="absolute right-6 top-6 flex gap-1.5">
+                      {carouselPosts.map((_, idx) => (
+                        <button
+                          key={idx}
+                          onClick={() => setSlideIndex(idx)}
+                          className={`h-1.5 transition-all rounded-full ${idx === slideIndex ? 'w-6 bg-sky-500' : 'w-1.5 bg-white/50'}`}
+                        />
+                      ))}
+                    </div>
+                  </>
+                ) : (
+                  <div className="absolute inset-0 flex items-center justify-center bg-slate-900">
+                    <p className="text-slate-500 text-sm">{locale === 'zh' ? '暂无文章' : 'No posts yet'}</p>
+                  </div>
+                )}
               </div>
 
               <div className="flex justify-between items-center pb-2 border-b border-slate-100 dark:border-slate-800">

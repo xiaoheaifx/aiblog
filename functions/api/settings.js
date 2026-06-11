@@ -104,12 +104,17 @@ export async function onRequestPost({ request, env }) {
     }
 
     const id = type + '-' + Date.now();
-    const { success } = await env.DB.prepare(
-      `INSERT INTO ${table} (id, name) VALUES (?, ?)`
-    ).bind(id, name).run();
-
-    if (success) return successResponse({ success: true, exists: false });
-    else return errorResponse('Failed to create');
+    try {
+      await env.DB.prepare(
+        `INSERT INTO ${table} (id, name) VALUES (?, ?)`
+      ).bind(id, name).run();
+      return successResponse({ success: true, exists: false });
+    } catch (error) {
+      if (error.message && error.message.includes('UNIQUE constraint failed')) {
+        return successResponse({ success: true, exists: true });
+      }
+      return errorResponse(`Failed to create: ${error.message}`);
+    }
   } catch (error) {
     console.error(error);
     return errorResponse(`Internal error: ${error.message}`);
