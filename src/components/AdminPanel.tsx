@@ -6,7 +6,7 @@ import {
   X, BarChart2, BookOpen, MessageSquare, Tag, User, 
   Trash2, Edit3, Pin, Plus, Check, 
   Settings, ArrowLeft, Sparkles, Eye, EyeOff,
-  Layers
+  Layers, LogOut, Lock
 } from 'lucide-react';
 
 interface AdminPanelProps {
@@ -14,13 +14,15 @@ interface AdminPanelProps {
   comments: Comment[];
   stats: UserStats;
   locale: 'zh' | 'en';
+  authToken: string | null;
   onAddPost: (post: Post) => Promise<boolean>;
   onUpdatePost: (post: Post) => Promise<boolean>;
   onDeletePost: (id: string) => Promise<boolean>;
   onDeleteComment: (id: string) => Promise<boolean>;
   onToggleHideComment: (id: string) => Promise<boolean>;
   onUpdateStats: (stats: UserStats) => void;
-  onClose: () => void;
+  onLogin: (token: string) => void;
+  onLogout: () => void;
   categories: string[];
   tags: string[];
   onAddCategory: (cat: string) => Promise<void>;
@@ -34,13 +36,15 @@ export default function AdminPanel({
   comments,
   stats,
   locale,
+  authToken,
   onAddPost,
   onUpdatePost,
   onDeletePost,
   onDeleteComment,
   onToggleHideComment,
   onUpdateStats,
-  onClose,
+  onLogin,
+  onLogout,
   categories,
   tags,
   onAddCategory,
@@ -65,6 +69,11 @@ export default function AdminPanel({
 
   const [newCatInput, setNewCatInput] = useState('');
   const [newTagInput, setNewTagInput] = useState('');
+
+  // Login form state
+  const [loginUsername, setLoginUsername] = useState('');
+  const [loginPassword, setLoginPassword] = useState('');
+  const [loginError, setLoginError] = useState('');
 
   const [editStatsViews, setEditStatsViews] = useState(stats.visitCount);
 
@@ -153,6 +162,100 @@ export default function AdminPanel({
   const totalLikes = posts.reduce((sum, p) => sum + p.likes, 0);
   const totalViews = posts.reduce((sum, p) => sum + p.views, 0);
 
+  // Login handler - validates by calling API
+  const handleLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoginError('');
+    
+    const token = btoa(`${loginUsername}:${loginPassword}`);
+    try {
+      const res = await fetch('/api/posts', {
+        headers: { 'Authorization': `Basic ${token}` }
+      });
+      
+      if (res.status === 401) {
+        setLoginError(locale === 'zh' ? '用户名或密码错误' : 'Invalid username or password');
+        return;
+      }
+      
+      // Verify success
+      onLogin(token);
+    } catch (err) {
+      setLoginError(locale === 'zh' ? '登录失败，请检查网络' : 'Login failed, please check network');
+    }
+  };
+
+  // If not logged in, show login form
+  if (!authToken) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-100 to-slate-200 dark:from-slate-900 dark:to-slate-950 flex items-center justify-center p-4">
+        <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-2xl p-8 w-full max-w-md border border-slate-200 dark:border-slate-700">
+          <div className="text-center mb-8">
+            <div className="w-16 h-16 rounded-2xl bg-gradient-to-tr from-sky-500 to-indigo-500 flex items-center justify-center text-white mx-auto mb-4 shadow-lg">
+              <Lock className="w-8 h-8" />
+            </div>
+            <h1 className="text-2xl font-black text-slate-900 dark:text-white">
+              {locale === 'zh' ? '管理后台' : 'Admin Login'}
+            </h1>
+            <p className="text-sm text-slate-500 mt-2">
+              {locale === 'zh' ? '请输入账号密码登录' : 'Enter credentials to continue'}
+            </p>
+          </div>
+          
+          <form onSubmit={handleLogin} className="space-y-4">
+            <div>
+              <label className="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2">
+                {locale === 'zh' ? '用户名' : 'Username'}
+              </label>
+              <input
+                type="text"
+                value={loginUsername}
+                onChange={(e) => setLoginUsername(e.target.value)}
+                className="w-full px-4 py-3 rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-sky-500 transition-all"
+                placeholder="xiaohe"
+                required
+              />
+            </div>
+            
+            <div>
+              <label className="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2">
+                {locale === 'zh' ? '密码' : 'Password'}
+              </label>
+              <input
+                type="password"
+                value={loginPassword}
+                onChange={(e) => setLoginPassword(e.target.value)}
+                className="w-full px-4 py-3 rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-sky-500 transition-all"
+                placeholder="••••••••"
+                required
+              />
+            </div>
+            
+            {loginError && (
+              <div className="text-red-500 text-sm font-medium text-center bg-red-50 dark:bg-red-950/30 rounded-xl py-2">
+                {loginError}
+              </div>
+            )}
+            
+            <button
+              type="submit"
+              className="w-full py-3 bg-gradient-to-r from-sky-500 to-indigo-500 hover:from-sky-600 hover:to-indigo-600 text-white font-bold rounded-xl transition-all shadow-md hover:shadow-lg"
+            >
+              {locale === 'zh' ? '登录' : 'Login'}
+            </button>
+          </form>
+          
+          <button
+            onClick={() => window.location.href = '/'}
+            className="w-full mt-4 py-2 text-sm text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-300 transition-colors"
+          >
+            {locale === 'zh' ? '← 返回首页' : '← Back to Home'}
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-slate-100 dark:bg-slate-950 text-slate-800 dark:text-slate-100 font-sans">
       <div className="bg-slate-50 dark:bg-slate-900 w-full min-h-screen">
@@ -175,9 +278,10 @@ export default function AdminPanel({
           
           <button 
             type="button"
-            onClick={onClose}
-            className="px-4 py-2 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-rose-50 dark:hover:bg-rose-950/30 hover:text-rose-600 dark:hover:text-rose-400 transition-all text-sm font-bold text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700 cursor-pointer"
+            onClick={onLogout}
+            className="px-4 py-2 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-rose-50 dark:hover:bg-rose-950/30 hover:text-rose-600 dark:hover:text-rose-400 transition-all text-sm font-bold text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700 cursor-pointer flex items-center gap-2"
           >
+            <LogOut className="w-4 h-4" />
             {locale === 'zh' ? '退出登录' : 'Logout'}
           </button>
         </div>
