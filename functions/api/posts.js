@@ -120,21 +120,23 @@ export async function onRequestPut({ request, env }) {
     const tagsStr = JSON.stringify(tags || []);
     const isPinnedInt = isPinned ? 1 : 0;
 
-    const { success } = await env.DB.prepare(
-      `UPDATE posts SET title = ?, content = ?, excerpt = ?, coverImage = ?, category = ?, tags = ?, isPinned = ? WHERE id = ?`
-    ).bind(
-      title,
-      content,
-      excerpt || content.slice(0, 150) + '...',
-      coverImage,
-      category || '技术干货',
-      tagsStr,
-      isPinnedInt,
-      id
-    ).run();
-
-    if (success) return successResponse({ success: true });
-    else return errorResponse('Post not found', 404);
+    try {
+      await env.DB.prepare(
+        `UPDATE posts SET title = ?, content = ?, excerpt = ?, coverImage = ?, category = ?, tags = ?, isPinned = ? WHERE id = ?`
+      ).bind(
+        title,
+        content,
+        excerpt || content.slice(0, 150) + '...',
+        coverImage,
+        category || '技术干货',
+        tagsStr,
+        isPinnedInt,
+        id
+      ).run();
+      return successResponse({ success: true });
+    } catch (updateError) {
+      return errorResponse(`Failed to update: ${updateError.message}`);
+    }
   } catch (error) {
     console.error(error);
     return errorResponse(`Internal error: ${error.message}`);
