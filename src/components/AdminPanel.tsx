@@ -154,21 +154,21 @@ export default function AdminPanel({
   const totalViews = posts.reduce((sum, p) => sum + p.views, 0);
 
   return (
-    <div className="fixed inset-0 z-50 bg-slate-900/40 dark:bg-[#070b13]/85 backdrop-blur-md flex items-center justify-center p-2.5 sm:p-5 overflow-hidden text-slate-800 dark:text-slate-100 font-sans animate-fadeIn">
-      <div className="bg-slate-50 dark:bg-slate-900 w-full h-full max-w-7xl rounded-2xl border border-slate-200 dark:border-slate-800 shadow-2xl flex flex-col overflow-hidden transition-all">
+    <div className="min-h-screen bg-slate-100 dark:bg-slate-950 text-slate-800 dark:text-slate-100 font-sans">
+      <div className="bg-slate-50 dark:bg-slate-900 w-full min-h-screen">
         
-        {/* Workspace Controller Top bar */}
-        <div className="flex items-center justify-between px-5 py-4 border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950/80">
+        {/* Top bar */}
+        <div className="flex items-center justify-between px-6 py-4 border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950/80">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-sky-500 to-indigo-500 flex items-center justify-center text-white shadow-sm">
               <Sparkles className="w-5 h-5 animate-pulse" />
             </div>
             <div>
               <h1 className="text-base sm:text-lg font-black tracking-tight text-slate-900 dark:text-white">
-                {locale === 'zh' ? '小何AI分享 · 自主创作控制中心' : 'XiaoHe AI Share · Creator Workspace'}
+                {locale === 'zh' ? '小何AI分享 · 控制中心' : 'XiaoHe AI Share · Creator Workspace'}
               </h1>
               <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">
-                {locale === 'zh' ? '在这里高效管理您的优质创作，定制去重统计，处理公开留言记录' : 'Customize stats baseline, write posts, manage tags and instant commentaries'}
+                {locale === 'zh' ? '在这里高效管理您的优质创作' : 'Manage your content'}
               </p>
             </div>
           </div>
@@ -176,17 +176,17 @@ export default function AdminPanel({
           <button 
             type="button"
             onClick={onClose}
-            className="p-2 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-rose-50 dark:hover:bg-rose-950/30 hover:text-rose-600 dark:hover:text-rose-400 transition-all text-slate-500 dark:text-slate-400 border border-slate-200 dark:border-transparent cursor-pointer"
+            className="px-4 py-2 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-rose-50 dark:hover:bg-rose-950/30 hover:text-rose-600 dark:hover:text-rose-400 transition-all text-sm font-bold text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700 cursor-pointer"
           >
-            <X className="w-5 h-5" />
+            {locale === 'zh' ? '退出登录' : 'Logout'}
           </button>
         </div>
 
         {/* Content Box */}
-        <div className="flex-1 flex overflow-hidden">
+        <div className="flex flex-col lg:flex-row">
           
           {/* Navigation Sidebar */}
-          <div className="w-16 sm:w-[220px] border-r border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950/30 p-2 sm:p-4 flex flex-col gap-1.5 shrink-0">
+          <div className="lg:w-56 border-b lg:border-b-0 lg:border-r border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950/30 p-3 flex flex-row lg:flex-col gap-1.5 overflow-x-auto">
             <button
               onClick={() => { setActiveTab('dashboard'); resetForm(); }}
               className={`flex items-center gap-3 px-3 py-3 rounded-xl text-xs sm:text-sm font-bold transition-all cursor-pointer ${
@@ -249,7 +249,7 @@ export default function AdminPanel({
           </div>
 
           {/* Main workspace scrollable pane */}
-          <div className="flex-1 overflow-y-auto p-4 sm:p-6 bg-white dark:bg-slate-900/40">
+          <div className="flex-1 overflow-y-auto p-4 sm:p-6 bg-white dark:bg-slate-900/40 min-h-[calc(100vh-80px)]">
 
             {/* TAB 1: DASHBOARD OVERVIEW */}
             {activeTab === 'dashboard' && (
