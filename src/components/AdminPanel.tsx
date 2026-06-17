@@ -14,11 +14,11 @@ interface AdminPanelProps {
   comments: Comment[];
   stats: UserStats;
   locale: 'zh' | 'en';
-  onAddPost: (post: Post) => Promise<void>;
-  onUpdatePost: (post: Post) => Promise<void>;
-  onDeletePost: (id: string) => Promise<void>;
-  onDeleteComment: (id: string) => Promise<void>;
-  onToggleHideComment: (id: string) => Promise<void>;
+  onAddPost: (post: Post) => Promise<boolean>;
+  onUpdatePost: (post: Post) => Promise<boolean>;
+  onDeletePost: (id: string) => Promise<boolean>;
+  onDeleteComment: (id: string) => Promise<boolean>;
+  onToggleHideComment: (id: string) => Promise<boolean>;
   onUpdateStats: (stats: UserStats) => void;
   onClose: () => void;
   categories: string[];
