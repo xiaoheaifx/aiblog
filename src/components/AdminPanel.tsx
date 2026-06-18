@@ -124,6 +124,13 @@ export default function AdminPanel({
       .map(t => t.trim())
       .filter(t => t.length > 0);
 
+    // 自动同步新标签到标签管理
+    for (const tag of tagList) {
+      if (!tags.includes(tag)) {
+        await onAddTag(tag);
+      }
+    }
+
     const postData: Post = {
       id: editingPost ? editingPost.id : 'post-' + Date.now(),
       title: formTitle,
@@ -168,6 +175,13 @@ export default function AdminPanel({
       .split(',')
       .map(t => t.trim())
       .filter(t => t.length > 0);
+
+    // 自动同步新标签到标签管理
+    for (const tag of tagList) {
+      if (!tags.includes(tag)) {
+        await onAddTag(tag);
+      }
+    }
 
     const postData: Post = {
       id: editingPost ? editingPost.id : 'post-' + Date.now(),

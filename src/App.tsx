@@ -284,7 +284,7 @@ export default function App() {
 
       {/* ===== HEADER ===== */}
       <header className="sticky top-0 z-40 bg-white dark:bg-[#0f1115] border-b border-slate-200 dark:border-slate-800">
-        <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 h-14 flex items-center justify-between gap-4">
+        <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between gap-4">
 
           <div className="flex items-center gap-6 md:gap-8 flex-1 min-w-0">
             <div onClick={() => { setCurrentTab('home'); setSelectedPostId(null); handleClearFilters(); }} className="flex items-center gap-2 cursor-pointer group shrink-0">
@@ -296,41 +296,41 @@ export default function App() {
               </span>
             </div>
 
-            <nav className="hidden md:flex items-center gap-1">
+            <nav className="hidden md:flex items-center gap-3">
               <button onClick={() => { setCurrentTab('home'); setSelectedPostId(null); handleClearFilters(); }}
-                className={`px-3 py-1.5 rounded-lg text-sm transition-all flex items-center gap-1.5 cursor-pointer ${
+                className={`px-4 py-2 rounded-lg text-base transition-all flex items-center gap-2 cursor-pointer ${
                   currentTab === 'home' && !selectedPostId && !selectedCategory && !selectedTag && !selectedArchive
                     ? 'text-slate-900 dark:text-slate-100 font-bold'
                     : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100'
                 }`}>
-                <Home className="w-4 h-4 text-slate-500 dark:text-slate-400" />
+                <Home className="w-5 h-5 text-slate-500 dark:text-slate-400" />
                 <span>{locale === 'zh' ? '首页' : 'Home'}</span>
               </button>
 
               <div className="relative" onMouseEnter={() => setShowArticlesDropdown(true)} onMouseLeave={() => setShowArticlesDropdown(false)}>
                 <button onClick={() => { setCurrentTab('articles'); setSelectedPostId(null); setSelectedCategory(null); }}
-                  className={`px-3 py-1.5 rounded-lg text-sm transition-all flex items-center gap-1.5 cursor-pointer ${
+                  className={`px-4 py-2 rounded-lg text-base transition-all flex items-center gap-2 cursor-pointer ${
                     currentTab === 'articles' || selectedPostId || selectedCategory || selectedTag || selectedArchive
                       ? 'text-slate-900 dark:text-slate-100 font-bold'
                       : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100'
                   }`}>
-                  <BookOpen className="w-4 h-4 text-slate-500 dark:text-slate-400" />
+                  <BookOpen className="w-5 h-5 text-slate-500 dark:text-slate-400" />
                   <span>{locale === 'zh' ? '文章' : 'Articles'}</span>
                 </button>
 
                 {showArticlesDropdown && (
                   <div className="absolute top-full left-0 mt-1 w-44 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg shadow-lg py-1.5 z-50 animate-fadeIn">
                     <button onClick={() => { setCurrentTab('articles'); setSelectedPostId(null); handleClearFilters(); setShowArticlesDropdown(false); }}
-                      className="w-full px-3 py-2 text-left text-xs font-bold text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors flex items-center gap-1.5 border-b border-slate-100 dark:border-slate-700">
+                      className="w-full px-3 py-2 text-left text-sm font-bold text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors flex items-center gap-1.5 border-b border-slate-100 dark:border-slate-700">
                       <span>{locale === 'zh' ? '全部文章' : 'All Articles'}</span>
                     </button>
                     {categories.map(cat => (
                       <button key={cat} onClick={() => { setCurrentTab('articles'); setSelectedPostId(null); setSelectedCategory(cat); setSelectedTag(null); setSelectedArchive(null); setSearchQuery(''); setShowArticlesDropdown(false); }}
-                        className={`w-full px-3 py-1.5 text-left text-xs transition-colors flex items-center justify-between hover:bg-slate-50 dark:hover:bg-slate-800 ${
+                        className={`w-full px-3 py-2 text-left text-sm transition-colors flex items-center justify-between hover:bg-slate-50 dark:hover:bg-slate-800 ${
                           selectedCategory === cat ? 'text-slate-900 dark:text-slate-100 font-bold' : 'text-slate-600 dark:text-slate-400 font-medium'
                         }`}>
                         <span className="truncate">{cat}</span>
-                        <span className="text-[10px] text-slate-400">{posts.filter(p => p.category === cat).length}</span>
+                        <span className="text-xs text-slate-400">{posts.filter(p => p.category === cat).length}</span>
                       </button>
                     ))}
                   </div>
@@ -338,97 +338,97 @@ export default function App() {
               </div>
 
               <button onClick={() => { setCurrentTab('about'); setSelectedPostId(null); }}
-                className={`px-3 py-1.5 rounded-lg text-sm transition-all flex items-center gap-1.5 cursor-pointer ${
+                className={`px-4 py-2 rounded-lg text-base transition-all flex items-center gap-2 cursor-pointer ${
                   currentTab === 'about' ? 'text-slate-900 dark:text-slate-100 font-bold' : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100'
                 }`}>
-                <User className="w-4 h-4 text-slate-500 dark:text-slate-400" />
+                <User className="w-5 h-5 text-slate-500 dark:text-slate-400" />
                 <span>{locale === 'zh' ? '关于' : 'About'}</span>
               </button>
 
               <button onClick={() => { setCurrentTab('privacy'); setSelectedPostId(null); }}
-                className={`px-3 py-1.5 rounded-lg text-sm transition-all flex items-center gap-1.5 cursor-pointer ${
+                className={`px-4 py-2 rounded-lg text-base transition-all flex items-center gap-2 cursor-pointer ${
                   currentTab === 'privacy' ? 'text-slate-900 dark:text-slate-100 font-bold' : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100'
                 }`}>
-                <Shield className="w-4 h-4 text-slate-500 dark:text-slate-400" />
+                <Shield className="w-5 h-5 text-slate-500 dark:text-slate-400" />
                 <span>{locale === 'zh' ? '隐私' : 'Privacy'}</span>
               </button>
             </nav>
           </div>
 
-          <div className="flex items-center gap-2 flex-1 md:flex-initial justify-end">
+          <div className="flex items-center gap-3 flex-1 md:flex-initial justify-end">
             <div className="relative max-w-[120px] sm:max-w-[180px] w-full">
               <input type="text" placeholder={translations[locale].searchPlaceholder} value={searchQuery}
                 onChange={e => { setSearchQuery(e.target.value); if (currentTab !== 'articles') { setCurrentTab('articles'); setSelectedPostId(null); } }}
-                className={`w-full py-1.5 pl-8 pr-3 rounded-md border text-xs outline-none transition-all ${
+                className={`w-full py-2 pl-8 pr-3 rounded-md border text-sm outline-none transition-all ${
                   theme === 'dark' ? 'bg-slate-900 border-slate-800 focus:border-slate-600 text-slate-100' : 'bg-white border-slate-200 focus:border-slate-400 text-slate-800'
                 }`} />
-              <Search className="absolute left-2.5 top-2.5 w-3.5 h-3.5 text-slate-400" />
+              <Search className="absolute left-2.5 top-2.5 w-4 h-4 text-slate-400" />
             </div>
 
             <button onClick={() => setLocale(locale === 'zh' ? 'en' : 'zh')}
-              className={`text-xs px-3 py-1.5 rounded-md transition-colors cursor-pointer ${
+              className={`text-sm px-3 py-2 rounded-md transition-colors cursor-pointer ${
                 theme === 'dark' ? 'text-slate-300 hover:bg-slate-800' : 'text-slate-600 hover:bg-slate-100'
               }`}>
               {translations[locale].currentLanguage}
             </button>
 
             <button onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
-              className={`p-1.5 rounded-md transition-colors cursor-pointer ${
+              className={`p-2 rounded-md transition-colors cursor-pointer ${
                 theme === 'dark' ? 'text-slate-300 hover:bg-slate-800' : 'text-slate-600 hover:bg-slate-100'
               }`}>
-              {theme === 'dark' ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+              {theme === 'dark' ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
             </button>
 
             {isAdmin ? (
               <button
                 onClick={() => window.location.href = '/admin'}
-                className="bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs px-3 py-1.5 rounded-lg transition-all shadow-sm flex items-center gap-1.5 shrink-0 cursor-pointer"
+                className="bg-blue-600 hover:bg-blue-700 text-white font-bold text-sm px-4 py-2 rounded-lg transition-all shadow-sm flex items-center gap-2 shrink-0 cursor-pointer"
               >
-                <Sparkles className="w-3.5 h-3.5" />
+                <Sparkles className="w-4 h-4" />
                 <span className="hidden sm:inline">{locale === 'zh' ? '后台仪表盘' : 'Console'}</span>
               </button>
             ) : (
               <button
                 onClick={() => setShowLoginModal(true)}
-                className="bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs px-3 py-1.5 rounded-lg transition-all shadow-sm flex items-center gap-1.5 shrink-0 cursor-pointer"
+                className="bg-blue-600 hover:bg-blue-700 text-white font-bold text-sm px-4 py-2 rounded-lg transition-all shadow-sm flex items-center gap-2 shrink-0 cursor-pointer"
               >
-                <LogIn className="w-3.5 h-3.5" />
+                <LogIn className="w-4 h-4" />
                 <span className="hidden sm:inline">{locale === 'zh' ? '登陆' : 'Login'}</span>
               </button>
             )}
 
             <button onClick={() => window.location.href = '/admin'}
-              className={`p-1.5 rounded-md transition-colors cursor-pointer ${
+              className={`p-2 rounded-md transition-colors cursor-pointer ${
                 theme === 'dark' ? 'text-slate-300 hover:bg-slate-800' : 'text-slate-600 hover:bg-slate-100'
               }`}
               title={translations[locale].login}>
-              <Lock className="w-4 h-4" />
+              <Lock className="w-5 h-5" />
             </button>
           </div>
         </div>
       </header>
 
       {/* Mobile Nav */}
-      <div className="md:hidden flex border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-[#0f1115] justify-around py-2.5 text-xs">
+      <div className="md:hidden flex border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-[#0f1115] justify-around py-3 text-sm">
         <button onClick={() => { setCurrentTab('home'); setSelectedPostId(null); }}
-          className={currentTab === 'home' && !selectedPostId ? 'text-slate-900 dark:text-slate-100 font-bold' : 'text-slate-500'}>
+          className={`px-3 py-2 rounded-lg transition-all ${currentTab === 'home' && !selectedPostId ? 'text-slate-900 dark:text-slate-100 font-bold bg-slate-100 dark:bg-slate-800' : 'text-slate-500'}`}>
           {translations[locale].navHome}
         </button>
         <button onClick={() => { setCurrentTab('articles'); setSelectedPostId(null); }}
-          className={currentTab === 'articles' || selectedPostId ? 'text-slate-900 dark:text-slate-100 font-bold' : 'text-slate-500'}>
+          className={`px-3 py-2 rounded-lg transition-all ${currentTab === 'articles' || selectedPostId ? 'text-slate-900 dark:text-slate-100 font-bold bg-slate-100 dark:bg-slate-800' : 'text-slate-500'}`}>
           {translations[locale].navArticles}
         </button>
         <button onClick={() => { setCurrentTab('about'); setSelectedPostId(null); }}
-          className={currentTab === 'about' ? 'text-slate-900 dark:text-slate-100 font-bold' : 'text-slate-500'}>
+          className={`px-3 py-2 rounded-lg transition-all ${currentTab === 'about' ? 'text-slate-900 dark:text-slate-100 font-bold bg-slate-100 dark:bg-slate-800' : 'text-slate-500'}`}>
           {translations[locale].navAbout}
         </button>
         <button onClick={() => { setCurrentTab('privacy'); setSelectedPostId(null); }}
-          className={currentTab === 'privacy' ? 'text-slate-900 dark:text-slate-100 font-bold' : 'text-slate-500'}>
+          className={`px-3 py-2 rounded-lg transition-all ${currentTab === 'privacy' ? 'text-slate-900 dark:text-slate-100 font-bold bg-slate-100 dark:bg-slate-800' : 'text-slate-500'}`}>
           {translations[locale].navPrivacy}
         </button>
         <button onClick={() => window.location.href = '/admin'}
-          className="text-slate-500 hover:text-slate-700 dark:hover:text-slate-300">
-          <Lock className="w-4 h-4" />
+          className="text-slate-500 hover:text-slate-700 dark:hover:text-slate-300 px-3 py-2">
+          <Lock className="w-5 h-5" />
         </button>
       </div>
 
@@ -629,7 +629,7 @@ export default function App() {
                     alt="Cover" className="w-full h-full object-cover object-center" referrerPolicy="no-referrer" />
                 </div>
 
-                <div className="prose dark:prose-invert max-w-none text-slate-700 dark:text-slate-200 text-sm sm:text-base leading-relaxed">
+                <div className="prose dark:prose-invert max-w-none text-slate-700 dark:text-slate-200 text-sm sm:text-base lg:text-lg leading-relaxed">
                   {(() => {
                     const content = locale === 'zh' ? currentPost.content : currentPost.contentEn;
                     if (/<(p|div|h[1-6]|br|img|a|strong|em|ul|ol|li|pre|code|blockquote|table|span|video)\b[^>]*>/i.test(content)) {
@@ -740,22 +740,24 @@ export default function App() {
           {currentTab === 'privacy' && <PrivacyView locale={locale} />}
         </div>
 
-        {/* Sidebar */}
-        <Sidebar
-          posts={posts}
-          comments={comments}
-          stats={stats}
-          locale={locale}
-          tags={tags}
-          categories={categories}
-          selectedTag={selectedTag}
-          selectedCategory={selectedCategory}
-          selectedArchive={selectedArchive}
-          onSelectTag={setSelectedTag}
-          onSelectCategory={setSelectedCategory}
-          onSelectArchive={setSelectedArchive}
-          onSelectPost={handleSelectPost}
-        />
+        {/* Sidebar - Hidden on mobile */}
+        <div className="hidden lg:block w-full lg:w-72 xl:w-80 shrink-0">
+          <Sidebar
+            posts={posts}
+            comments={comments}
+            stats={stats}
+            locale={locale}
+            tags={tags}
+            categories={categories}
+            selectedTag={selectedTag}
+            selectedCategory={selectedCategory}
+            selectedArchive={selectedArchive}
+            onSelectTag={setSelectedTag}
+            onSelectCategory={setSelectedCategory}
+            onSelectArchive={setSelectedArchive}
+            onSelectPost={handleSelectPost}
+          />
+        </div>
       </main>
 
       <footer className="mt-auto border-t border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-500 py-6 text-center text-xs">
