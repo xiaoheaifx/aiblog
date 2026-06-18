@@ -181,20 +181,3 @@ export async function onRequestDelete({ request, env, params }) {
     return errorResponse(`Failed to delete: ${error.message}`);
   }
 }
-
-// Default export
-export async function onRequest(context) {
-  const { request } = context;
-  
-  if (request.method === 'GET') {
-    return onRequestGet(context);
-  } else if (request.method === 'POST') {
-    return onRequestPost(context);
-  } else if (request.method === 'PUT') {
-    return onRequestPut(context);
-  } else if (request.method === 'DELETE') {
-    return onRequestDelete(context);
-  } else {
-    return new Response('Method not allowed', { status: 405 });
-  }
-}
