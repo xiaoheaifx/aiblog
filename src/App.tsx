@@ -62,7 +62,6 @@ export default function App() {
   // ===== Slideshow =====
   const [slideIndex, setSlideIndex] = useState(0);
   const [carouselPosts, setCarouselPosts] = useState<Post[]>([]);
-<<<<<<< Updated upstream
 
   // Modals / Authentication
   const [showLoginModal, setShowLoginModal] = useState(false);
@@ -380,7 +379,6 @@ export default function App() {
               {theme === 'dark' ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
             </button>
 
-<<<<<<< Updated upstream
             {isAdmin ? (
               <button
                 onClick={() => window.location.href = '/admin'}
@@ -764,7 +762,6 @@ export default function App() {
         <p className="font-medium">{translations[locale].footerText}</p>
         <p className="text-slate-400 dark:text-slate-500 mt-1">小何 AI Share · Dynamic Blog</p>
       </footer>
-<<<<<<< Updated upstream
 
       {/* Admin Panel - Only show on /admin route */}
       {isAdminPage && (
