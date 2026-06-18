@@ -82,12 +82,16 @@ export default function App() {
   const [isAdmin, setIsAdmin] = useState(() => {
     return localStorage.getItem('blog_is_admin') === 'true';
   });
-  const [showAdminPanel, setShowAdminPanel] = useState(false);
+  const [showAdminPanel, setShowAdminPanel] = useState(() => {
+    return window.location.pathname === '/admin';
+  });
   
   // Basic Auth token (Base64)
     const [authToken, setAuthToken] = useState<string | null>(() => {
     return sessionStorage.getItem('blog_auth_token');
   });
+
+  const isAdminPage = window.location.pathname === '/admin';
 
   // Header dropdown state
   const [showArticlesDropdown, setShowArticlesDropdown] = useState(false);
@@ -933,7 +937,7 @@ export default function App() {
 
             {isAdmin ? (
               <button
-                onClick={() => setShowAdminPanel(true)}
+                onClick={() => window.location.href = '/admin'}
                 className="bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs px-3 py-1.5 rounded-lg transition-all shadow-sm flex items-center gap-1.5 shrink-0 cursor-pointer"
               >
                 <Sparkles className="w-3.5 h-3.5" />
@@ -1434,26 +1438,39 @@ export default function App() {
         <p className="text-[10px] text-slate-500 font-mono tracking-wide">Designed with ♥ for XiaoHe. Dynamic localized routing. Built on Vercel & Cloudflare SPA standard.</p>
       </footer>
 
-      {/* Admin Panel */}
-      {showAdminPanel && (
+      {/* Admin Panel - Only show on /admin route */}
+      {isAdminPage && (
         <AdminPanel
           posts={posts}
           comments={comments}
           stats={stats}
           locale={locale}
+          authToken={authToken}
           onAddPost={handleAddPost}
           onUpdatePost={handleUpdatePost}
           onDeletePost={handleDeletePost}
           onDeleteComment={handleDeleteComment}
           onToggleHideComment={handleToggleHideComment}
           onUpdateStats={setStats}
+          onLogin={(token) => {
+            setAuthToken(token);
+            setIsAdmin(true);
+            sessionStorage.setItem('blog_auth_token', token);
+            localStorage.setItem('blog_is_admin', 'true');
+          }}
+          onLogout={() => {
+            setAuthToken(null);
+            setIsAdmin(false);
+            sessionStorage.removeItem('blog_auth_token');
+            localStorage.setItem('blog_is_admin', 'false');
+            window.location.href = '/';
+          }}
           categories={categories}
           tags={tags}
           onAddCategory={handleAddCategory}
           onAddTag={handleAddTag}
           onDeleteCategory={handleDeleteCategory}
           onDeleteTag={handleDeleteTag}
-          onClose={() => setShowAdminPanel(false)}
         />
       )}
 
