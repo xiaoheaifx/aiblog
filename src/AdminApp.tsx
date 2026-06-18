@@ -57,9 +57,10 @@ export default function AdminApp() {
   }, [theme]);
 
   // ===== Data Fetching =====
-  const fetchPosts = async () => {
+  const fetchPosts = async (includeDrafts = false) => {
     try {
-      const res = await fetch('/api/posts');
+      const url = includeDrafts ? '/api/posts?draft=all' : '/api/posts';
+      const res = await fetch(url);
       if (!res.ok) return;
       const data = await res.json();
       setPosts(data);

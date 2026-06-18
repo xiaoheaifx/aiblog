@@ -57,6 +57,7 @@ export default function AdminPanel({
   // Post states
   const [editingPost, setEditingPost] = useState<Post | null>(null);
   const [isCreating, setIsCreating] = useState(false);
+  const [showDrafts, setShowDrafts] = useState(false);
   
   // Custom form inputs for posts
   const [formTitle, setFormTitle] = useState('');
@@ -66,6 +67,7 @@ export default function AdminPanel({
   const [formExcerpt, setFormExcerpt] = useState('');
   const [formContent, setFormContent] = useState('');
   const [formIsPinned, setFormIsPinned] = useState(false);
+  const [formIsDraft, setFormIsDraft] = useState(false);
 
   const [newCatInput, setNewCatInput] = useState('');
   const [newTagInput, setNewTagInput] = useState('');
@@ -85,6 +87,7 @@ export default function AdminPanel({
     setFormExcerpt('');
     setFormContent('');
     setFormIsPinned(false);
+    setFormIsDraft(false);
     setEditingPost(null);
     setIsCreating(false);
   };
@@ -103,6 +106,7 @@ export default function AdminPanel({
     setFormExcerpt(post.excerpt);
     setFormContent(post.content);
     setFormIsPinned(!!post.isPinned);
+    setFormIsDraft(!!post.isDraft);
     setIsCreating(true);
   };
 
@@ -135,7 +139,8 @@ export default function AdminPanel({
       tags: tagList,
       category: formCategory,
       categoryEn: formCategory,
-      isPinned: formIsPinned
+      isPinned: formIsPinned,
+      isDraft: formIsDraft
     };
 
     let success = false;
@@ -147,6 +152,51 @@ export default function AdminPanel({
 
     if (success) {
       alert(locale === 'zh' ? '文章发布成功！' : 'Post published successfully!');
+      resetForm();
+    }
+  };
+
+  const handleSaveDraft = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const strippedContent = formContent.replace(/<[^>]*>/g, '').trim();
+    if (!formTitle || !strippedContent) {
+      alert(locale === 'zh' ? '标题和内容为必填项！' : 'Title and Content are required!');
+      return;
+    }
+
+    const tagList = formTags
+      .split(',')
+      .map(t => t.trim())
+      .filter(t => t.length > 0);
+
+    const postData: Post = {
+      id: editingPost ? editingPost.id : 'post-' + Date.now(),
+      title: formTitle,
+      titleEn: formTitle,
+      excerpt: formExcerpt || formContent.slice(0, 100) + '...',
+      excerptEn: formExcerpt || formContent.slice(0, 100) + '...',
+      content: formContent,
+      contentEn: formContent,
+      coverImage: formCover || 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&q=80&w=800',
+      date: editingPost ? editingPost.date : new Date().toISOString().split('T')[0],
+      likes: editingPost ? editingPost.likes : 0,
+      views: editingPost ? editingPost.views : 0,
+      tags: tagList,
+      category: formCategory,
+      categoryEn: formCategory,
+      isPinned: false,
+      isDraft: true
+    };
+
+    let success = false;
+    if (editingPost) {
+      success = await onUpdatePost(postData);
+    } else {
+      success = await onAddPost(postData);
+    }
+
+    if (success) {
+      alert(locale === 'zh' ? '草稿保存成功！' : 'Draft saved successfully!');
       resetForm();
     }
   };
@@ -416,11 +466,29 @@ export default function AdminPanel({
               <div className="space-y-4 animate-fadeIn">
                 {!isCreating ? (
                   <>
-                    <div className="flex justify-between items-center">
-                      <h3 className="text-base sm:text-lg font-black text-slate-800 dark:text-white flex items-center gap-2">
-                        <BookOpen className="w-5 h-5 text-indigo-500" />
-                        <span>{locale === 'zh' ? '全站文章档案' : 'Publications Database'}</span>
-                      </h3>
+                    <div className="flex justify-between items-center flex-wrap gap-3">
+                      <div className="flex items-center gap-3">
+                        <h3 className="text-base sm:text-lg font-black text-slate-800 dark:text-white flex items-center gap-2">
+                          <BookOpen className="w-5 h-5 text-indigo-500" />
+                          <span>{locale === 'zh' ? '全站文章档案' : 'Publications Database'}</span>
+                        </h3>
+                        <button
+                          onClick={() => setShowDrafts(!showDrafts)}
+                          className={`flex items-center gap-1.5 text-xs font-bold px-3 py-1.5 rounded-lg border transition-all cursor-pointer ${
+                            showDrafts
+                              ? 'bg-amber-100 text-amber-700 border-amber-300 dark:bg-amber-900/30 dark:text-amber-400 dark:border-amber-700'
+                              : 'bg-slate-100 text-slate-500 border-slate-200 dark:bg-slate-800 dark:text-slate-400 dark:border-slate-700'
+                          }`}
+                        >
+                          <span className="w-2 h-2 rounded-full bg-current"></span>
+                          {locale === 'zh' ? '草稿箱' : 'Drafts'}
+                          {posts.filter(p => p.isDraft).length > 0 && (
+                            <span className="bg-amber-500 text-white text-[10px] px-1.5 py-0.5 rounded-full min-w-[18px] text-center">
+                              {posts.filter(p => p.isDraft).length}
+                            </span>
+                          )}
+                        </button>
+                      </div>
                       <button
                         onClick={startCreating}
                         className="flex items-center gap-1.5 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs sm:text-sm px-4 py-2.5 rounded-xl shadow-md transition-all active:scale-95 cursor-pointer"
@@ -442,10 +510,15 @@ export default function AdminPanel({
                           </tr>
                         </thead>
                         <tbody className="divide-y divide-slate-150 dark:divide-slate-800">
-                          {posts.map(post => (
-                            <tr key={post.id} className="hover:bg-slate-100/50 dark:hover:bg-slate-800/25 transition-colors">
+                          {(showDrafts ? posts.filter(p => p.isDraft) : posts.filter(p => !p.isDraft)).map(post => (
+                            <tr key={post.id} className={`hover:bg-slate-100/50 dark:hover:bg-slate-800/25 transition-colors ${post.isDraft ? 'bg-amber-50/30 dark:bg-amber-950/10' : ''}`}>
                               <td className="px-4 py-3.5 max-w-[150px] sm:max-w-md">
                                 <div className="flex items-center gap-2">
+                                  {post.isDraft && (
+                                    <span className="bg-amber-100 text-amber-600 dark:bg-amber-500/20 dark:text-amber-400 px-2 py-0.5 rounded text-[10px] font-bold shrink-0">
+                                      {locale === 'zh' ? '草稿' : 'Draft'}
+                                    </span>
+                                  )}
                                   {post.isPinned && (
                                     <span className="bg-amber-100 text-amber-600 dark:bg-amber-500/20 dark:text-amber-400 p-1 rounded-lg shrink-0 flex items-center justify-center" title="Pinned">
                                       <Pin className="w-3.5 h-3.5 fill-current" />
@@ -593,13 +666,22 @@ export default function AdminPanel({
                       </label>
                     </div>
 
-                    <div className="flex gap-2">
+                    <div className="flex gap-2 flex-wrap">
                       <button
                         type="submit"
+                        formNoValidate={false}
                         className="bg-emerald-600 hover:bg-emerald-700 text-white text-xs sm:text-sm font-bold px-5 py-2.5 rounded-xl transition-all shadow-md active:scale-95 flex items-center gap-1.5 cursor-pointer"
                       >
                         <Check className="w-4 h-4" />
-                        {locale === 'zh' ? '发布并保存文章' : 'Save Changes'}
+                        {locale === 'zh' ? '发布并保存文章' : 'Publish & Save'}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={handleSaveDraft}
+                        className="bg-amber-500 hover:bg-amber-600 text-white text-xs sm:text-sm font-bold px-5 py-2.5 rounded-xl transition-all shadow-md active:scale-95 flex items-center gap-1.5 cursor-pointer"
+                      >
+                        <span className="text-base">📝</span>
+                        {locale === 'zh' ? '保存草稿' : 'Save Draft'}
                       </button>
                       <button
                         type="button"

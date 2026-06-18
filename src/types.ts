@@ -14,6 +14,7 @@ export interface Post {
   category: string;
   categoryEn: string;
   isPinned?: boolean;
+  isDraft?: boolean;
 }
 
 export interface Comment {

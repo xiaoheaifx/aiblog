@@ -36,17 +36,18 @@ export async function onRequestPost({ request, env }) {
   
   try {
     const body = await request.json();
-    const { title, content, excerpt, coverImage, category, tags, isPinned } = body;
+    const { title, content, excerpt, coverImage, category, tags, isPinned, isDraft } = body;
     if (!title || !content) return errorResponse('Title and content required', 400);
 
     const id = 'post-' + Date.now();
     const tagsStr = JSON.stringify(tags || []);
     const isPinnedInt = isPinned ? 1 : 0;
+    const isDraftInt = isDraft ? 1 : 0;
     const defaultCover = 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&q=80&w=800';
 
     await env.DB.prepare(
-      `INSERT INTO posts (id, title, content, excerpt, coverImage, likes, views, category, tags, isPinned)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+      `INSERT INTO posts (id, title, content, excerpt, coverImage, likes, views, category, tags, isPinned, isDraft)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
     ).bind(
       id,
       title,
@@ -57,7 +58,8 @@ export async function onRequestPost({ request, env }) {
       0,
       category || '技术干货',
       tagsStr,
-      isPinnedInt
+      isPinnedInt,
+      isDraftInt
     ).run();
 
     return successResponse({ success: true, id });
@@ -68,14 +70,30 @@ export async function onRequestPost({ request, env }) {
 }
 
 // GET /api/posts - 获取文章列表（当没有 ID 时）
-export async function onRequestGet({ env }) {
+export async function onRequestGet({ request, env }) {
   if (!env.DB) return errorResponse('D1 binding DB is not defined', 500);
   
   try {
-    const { results } = await env.DB.prepare(
-      `SELECT id, title, content, excerpt, coverImage, created_at AS date, likes, views, category, tags, isPinned
-       FROM posts ORDER BY isPinned DESC, created_at DESC`
-    ).all();
+    const url = new URL(request.url);
+    const draftParam = url.searchParams.get('draft');
+    
+    let query = `SELECT id, title, content, excerpt, coverImage, created_at AS date, likes, views, category, tags, isPinned, isDraft
+       FROM posts`;
+    let params = [];
+    
+    if (draftParam === '1') {
+      query += ` WHERE isDraft = 1`;
+    } else if (draftParam === 'all') {
+      // Admin panel: show all posts including drafts
+      // No WHERE clause needed
+    } else {
+      // Default: exclude drafts (show only published posts)
+      query += ` WHERE isDraft = 0 OR isDraft IS NULL`;
+    }
+    
+    query += ` ORDER BY isPinned DESC, created_at DESC`;
+
+    const { results } = await env.DB.prepare(query).bind(...params).all();
 
     const posts = results.map(p => {
       let parsedTags = [];
@@ -93,6 +111,7 @@ export async function onRequestGet({ env }) {
         ...p,
         tags: parsedTags,
         isPinned: !!p.isPinned,
+        isDraft: !!p.isDraft,
         likes: p.likes || 0,
         views: p.views || 0,
         titleEn: p.titleEn || '',
@@ -118,14 +137,15 @@ export async function onRequestPut({ request, env, params }) {
     if (!id) return errorResponse('Post ID required', 400);
     
     const body = await request.json();
-    const { title, content, excerpt, coverImage, category, tags, isPinned } = body;
+    const { title, content, excerpt, coverImage, category, tags, isPinned, isDraft } = body;
     if (!title || !content) return errorResponse('Title and content required', 400);
 
     const tagsStr = JSON.stringify(tags || []);
     const isPinnedInt = isPinned ? 1 : 0;
+    const isDraftInt = isDraft ? 1 : 0;
 
     await env.DB.prepare(
-      `UPDATE posts SET title = ?, content = ?, excerpt = ?, coverImage = ?, category = ?, tags = ?, isPinned = ? WHERE id = ?`
+      `UPDATE posts SET title = ?, content = ?, excerpt = ?, coverImage = ?, category = ?, tags = ?, isPinned = ?, isDraft = ? WHERE id = ?`
     ).bind(
       title,
       content,
@@ -134,6 +154,7 @@ export async function onRequestPut({ request, env, params }) {
       category || '技术干货',
       tagsStr,
       isPinnedInt,
+      isDraftInt,
       id
     ).run();
 

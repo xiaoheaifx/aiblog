@@ -10,7 +10,8 @@ CREATE TABLE IF NOT EXISTS posts (
     views INTEGER DEFAULT 0,
     category TEXT DEFAULT '技术干货',
     tags TEXT,
-    isPinned INTEGER DEFAULT 0
+    isPinned INTEGER DEFAULT 0,
+    isDraft INTEGER DEFAULT 0
 );
 
 -- 评论表
