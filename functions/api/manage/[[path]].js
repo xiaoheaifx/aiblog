@@ -1,4 +1,4 @@
-// functions/api/manage/[[...path]].js
+// functions/api/manage/[[path]].js
 // 处理分类和标签的删除操作
 
 function checkAuth(request, env) {
