@@ -116,6 +116,7 @@ export default function WysiwygEditor({ value, onChange, placeholder, locale, co
   const resizeStartX = useRef(0);
   const resizeStartWidth = useRef(0);
   const initializedRef = useRef(false);
+  const [lastMode, setLastMode] = useState<'wysiwyg' | 'markdown'>('wysiwyg');
 
   useEffect(() => {
     if (mode === 'wysiwyg' && editorRef.current && !initializedRef.current) {
@@ -157,6 +158,7 @@ export default function WysiwygEditor({ value, onChange, placeholder, locale, co
     const html = editorRef.current?.innerHTML || value;
     const md = htmlToMarkdown(html);
     setMarkdownText(md);
+    setLastMode('wysiwyg');
     setMode('markdown');
     setSelectedElement(null);
   };
@@ -167,8 +169,16 @@ export default function WysiwygEditor({ value, onChange, placeholder, locale, co
       editorRef.current.innerHTML = html;
       onChange(html);
     }
+    setLastMode('markdown');
     setMode('wysiwyg');
   };
+
+  // Sync markdown content to parent onChange in real-time
+  useEffect(() => {
+    if (mode === 'markdown') {
+      onChange(markdownToHtml(markdownText));
+    }
+  }, [markdownText, mode]);
 
   const handleInsertImage = () => {
     if (!imageUrl.trim()) return;
@@ -566,6 +576,24 @@ export default function WysiwygEditor({ value, onChange, placeholder, locale, co
             contentEditable
             onInput={handleInput}
             onClick={handleEditorClick}
+            onPaste={(e) => {
+              e.preventDefault();
+              const html = e.clipboardData.getData('text/html');
+              const text = e.clipboardData.getData('text/plain');
+              if (html) {
+                const cleaned = html
+                  .replace(/<meta[^>]*>/gi, '')
+                  .replace(/<style[^>]*>[\s\S]*?<\/style>/gi, '')
+                  .replace(/<script[^>]*>[\s\S]*?<\/script>/gi, '')
+                  .replace(/class="[^"]*"/gi, '')
+                  .replace(/id="[^"]*"/gi, '');
+                document.execCommand('insertHTML', false, cleaned);
+              } else {
+                const withBreaks = text.replace(/\n/g, '<br>');
+                document.execCommand('insertHTML', false, withBreaks);
+              }
+              handleInput();
+            }}
             className="outline-none min-h-[200px] p-4 text-slate-800 dark:text-slate-200 text-sm leading-relaxed prose dark:prose-invert max-w-none focus:outline-none"
             style={{ wordBreak: 'break-word' }}
           />
