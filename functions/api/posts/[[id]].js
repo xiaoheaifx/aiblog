@@ -160,7 +160,7 @@ export async function onRequestPut(context) {
   }
 }
 
-// DELETE /api/posts/:id - 删除文章
+// DELETE /api/posts/:id - 删除文章（级联删除评论）
 export async function onRequestDelete(context) {
   const { request, env } = context;
   if (!checkAuth(request, env)) return errorResponse('Unauthorized', 401);
@@ -171,7 +171,12 @@ export async function onRequestDelete(context) {
     const id = extractIdFromUrl(url);
     if (!id) return errorResponse('Post ID required', 400);
     
+    // 先删除该文章的所有评论
+    await env.DB.prepare("DELETE FROM comments WHERE post_id = ?").bind(id).run();
+    
+    // 再删除文章
     await env.DB.prepare("DELETE FROM posts WHERE id = ?").bind(id).run();
+    
     return successResponse({ success: true });
   } catch (error) {
     console.error('DELETE /api/posts/:id error:', error);
